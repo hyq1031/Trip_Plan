@@ -6,10 +6,12 @@ import type {
   GroupPackingItem,
   HotelSuggestion,
   Member,
+  MoneyTip,
   NewPlaceInput,
   PersonalPackingItem,
   Place,
   PlacePatch,
+  RestaurantSuggestion,
   ServerEvent,
   TicketPriceResult,
   Trip,
@@ -29,7 +31,10 @@ type TripRow = Record<string, SqlStorageValue> & {
   version: number;
   trip_type: string;
   voting_enabled: number;
+  free_days: number;
   hotel_suggestions: string;
+  money_tips: string;
+  restaurant_suggestions: string;
 };
 
 type MemberRow = Record<string, SqlStorageValue> & {
@@ -87,9 +92,25 @@ const NOMINATIM_HEADERS = { "User-Agent": "FriendTrip/1.0 (friend-trip planner; 
 const GEOCODE_DELAY_MS = 1100;
 const MAX_GENERATED_PLACES = 12;
 const MAX_GENERATED_HOTELS = 3;
+const MAX_MONEY_TIPS = 3;
+const DEFAULT_VISIT_DURATION_MIN = 90;
+// A day is "full enough" once its accumulated visit time hits the average —
+// this cap lets one more stop in before rolling over, so days end up close
+// to even rather than one place tipping into a whole new day.
+const DAY_OVERFLOW_FACTOR = 1.3;
 
 interface WsAttachment {
   memberId: string;
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
 }
 
 function placeFromRow(row: PlaceRow): Place {
@@ -145,7 +166,10 @@ export class TripRoom extends DurableObject<Env> {
         version INTEGER NOT NULL DEFAULT 0,
         trip_type TEXT NOT NULL DEFAULT 'friends',
         voting_enabled INTEGER NOT NULL DEFAULT 1,
-        hotel_suggestions TEXT NOT NULL DEFAULT '[]'
+        free_days INTEGER NOT NULL DEFAULT 0,
+        hotel_suggestions TEXT NOT NULL DEFAULT '[]',
+        money_tips TEXT NOT NULL DEFAULT '[]',
+        restaurant_suggestions TEXT NOT NULL DEFAULT '[]'
       )
     `);
     this.sql.exec(`
@@ -337,6 +361,40 @@ export class TripRoom extends DurableObject<Env> {
     }
   }
 
+  private moneyTipsFromRow(row: TripRow | null): MoneyTip[] {
+    if (!row) return [];
+    try {
+      return JSON.parse(row.money_tips) as MoneyTip[];
+    } catch {
+      return [];
+    }
+  }
+
+  private restaurantSuggestionsFromRow(row: TripRow | null): RestaurantSuggestion[] {
+    if (!row) return [];
+    try {
+      return JSON.parse(row.restaurant_suggestions) as RestaurantSuggestion[];
+    } catch {
+      return [];
+    }
+  }
+
+  private extrasEvent(): ServerEvent {
+    const row = this.getTripRow();
+    return {
+      type: "extras",
+      moneyTips: this.moneyTipsFromRow(row),
+      restaurantSuggestions: this.restaurantSuggestionsFromRow(row),
+    };
+  }
+
+  private broadcastExtras() {
+    const payload = JSON.stringify(this.extrasEvent());
+    for (const ws of this.ctx.getWebSockets()) {
+      ws.send(payload);
+    }
+  }
+
   // --- RPC methods (called directly on the stub from the Worker) ---
 
   async createTrip(input: {
@@ -347,13 +405,14 @@ export class TripRoom extends DurableObject<Env> {
     endDate: string;
     token: string;
     tripType?: TripType;
+    freeDays?: number;
   }): Promise<void> {
     const tripType: TripType = input.tripType ?? "friends";
     // Family trips default to a top-down (no-voting) mode; friend trips default to voting on.
     const votingEnabled = tripType === "friends";
     this.sql.exec(
-      `INSERT OR IGNORE INTO trip (id, title, destination, start_date, end_date, token, version, trip_type, voting_enabled)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      `INSERT OR IGNORE INTO trip (id, title, destination, start_date, end_date, token, version, trip_type, voting_enabled, free_days)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
       input.id,
       input.title,
       input.destination,
@@ -362,6 +421,7 @@ export class TripRoom extends DurableObject<Env> {
       input.token,
       tripType,
       votingEnabled ? 1 : 0,
+      Math.max(0, input.freeDays ?? 0),
     );
   }
 
@@ -377,6 +437,7 @@ export class TripRoom extends DurableObject<Env> {
       version: row.version,
       tripType: row.trip_type as TripType,
       votingEnabled: row.voting_enabled === 1,
+      freeDays: row.free_days,
     };
     return {
       trip,
@@ -385,6 +446,8 @@ export class TripRoom extends DurableObject<Env> {
       groupPacking: this.listGroupPackingInternal(),
       personalPacking: this.listPersonalPackingInternal(),
       hotelSuggestions: this.hotelSuggestionsFromRow(row),
+      moneyTips: this.moneyTipsFromRow(row),
+      restaurantSuggestions: this.restaurantSuggestionsFromRow(row),
     };
   }
 
@@ -595,9 +658,65 @@ export class TripRoom extends DurableObject<Env> {
     return { lat: Number.parseFloat(first.lat), lng: Number.parseFloat(first.lon) };
   }
 
-  async generateItinerary(
-    token: string,
-  ): Promise<{ places: Place[]; hotelSuggestions: HotelSuggestion[] } | { error: string }> {
+  /**
+   * Assigns geocoded places to days deterministically instead of trusting the
+   * LLM's day picks (observed unreliable — e.g. dumping every place on day 0).
+   * Orders places into a spatially-coherent walk (greedy nearest-neighbor),
+   * then slices that walk into `dayCount` chunks sized by estimated visit
+   * duration so each day lands close to the trip's average load.
+   */
+  private clusterPlacesIntoDays<T extends { lat: number; lng: number; estDurationMin: number }>(
+    places: T[],
+    dayCount: number,
+  ): T[][] {
+    if (places.length === 0 || dayCount <= 0) return [];
+
+    const remaining = [...places];
+    const ordered: T[] = [remaining.shift()!];
+    while (remaining.length > 0) {
+      const last = ordered[ordered.length - 1];
+      let nearestIndex = 0;
+      let nearestDist = Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const d = haversineKm(last.lat, last.lng, remaining[i].lat, remaining[i].lng);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearestIndex = i;
+        }
+      }
+      ordered.push(remaining.splice(nearestIndex, 1)[0]);
+    }
+
+    const totalDuration = ordered.reduce((sum, p) => sum + p.estDurationMin, 0);
+    const targetPerDay = totalDuration / dayCount;
+
+    const days: T[][] = Array.from({ length: dayCount }, () => []);
+    let dayIndex = 0;
+    let dayDuration = 0;
+    for (const place of ordered) {
+      if (
+        dayIndex < dayCount - 1 &&
+        days[dayIndex].length > 0 &&
+        dayDuration + place.estDurationMin > targetPerDay * DAY_OVERFLOW_FACTOR
+      ) {
+        dayIndex++;
+        dayDuration = 0;
+      }
+      days[dayIndex].push(place);
+      dayDuration += place.estDurationMin;
+    }
+    return days;
+  }
+
+  async generateItinerary(token: string): Promise<
+    | {
+        places: Place[];
+        hotelSuggestions: HotelSuggestion[];
+        moneyTips: MoneyTip[];
+        restaurantSuggestions: RestaurantSuggestion[];
+      }
+    | { error: string }
+  > {
     if (!this.checkToken(token)) return { error: "forbidden" };
     const row = this.getTripRow();
     if (!row) return { error: "not_found" };
@@ -608,48 +727,69 @@ export class TripRoom extends DurableObject<Env> {
 
     const start = new Date(`${row.start_date}T00:00:00Z`);
     const end = new Date(`${row.end_date}T00:00:00Z`);
-    const dayCount = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
-    const placesToRequest = Math.min(dayCount * 2, MAX_GENERATED_PLACES);
+    const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+    const touringDays = Math.max(1, totalDays - row.free_days);
+    const placesToRequest = Math.min(touringDays * 2, MAX_GENERATED_PLACES);
 
     const suggestions = await this.callOpenRouterForItinerary(
       row.destination,
-      dayCount,
+      touringDays,
       placesToRequest,
       row.trip_type as TripType,
     );
 
-    const places: Place[] = [];
-    const nextSortOrder = new Map<number, number>();
+    type Geocoded = (typeof suggestions.places)[number] & { lat: number; lng: number };
+    const geocoded: Geocoded[] = [];
     for (const suggestion of suggestions.places) {
       const geo = await this.geocode(`${suggestion.name}, ${row.destination}`);
       if (!geo) continue; // skip anything Nominatim can't confidently resolve rather than guess coordinates
       await new Promise((resolve) => setTimeout(resolve, GEOCODE_DELAY_MS));
-
-      const dayIndex = Math.min(Math.max(0, suggestion.dayIndex), dayCount - 1);
-      const sortOrder = nextSortOrder.get(dayIndex) ?? 0;
-      nextSortOrder.set(dayIndex, sortOrder + 1);
-
-      const id = nanoid(10);
-      this.sql.exec(
-        `INSERT INTO places (id, day_index, sort_order, name, lat, lng, est_cost, category, notes, status, votes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'planned', '{}')`,
-        id,
-        dayIndex,
-        sortOrder,
-        suggestion.name,
-        geo.lat,
-        geo.lng,
-        suggestion.estCost,
-        suggestion.category || "📍",
-        suggestion.notes ?? "",
-      );
-      const placeRow = this.sql.exec<PlaceRow>("SELECT * FROM places WHERE id = ?", id).toArray()[0];
-      places.push(placeFromRow(placeRow));
+      geocoded.push({ ...suggestion, ...geo });
     }
+
+    const dayClusters = this.clusterPlacesIntoDays(geocoded, touringDays);
+
+    const places: Place[] = [];
+    dayClusters.forEach((dayPlaces, dayIndex) => {
+      dayPlaces.forEach((suggestion, sortOrder) => {
+        const id = nanoid(10);
+        this.sql.exec(
+          `INSERT INTO places (id, day_index, sort_order, name, lat, lng, est_cost, category, notes, status, votes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'planned', '{}')`,
+          id,
+          dayIndex,
+          sortOrder,
+          suggestion.name,
+          suggestion.lat,
+          suggestion.lng,
+          suggestion.estCost,
+          suggestion.category || "📍",
+          suggestion.notes ?? "",
+        );
+        const placeRow = this.sql.exec<PlaceRow>("SELECT * FROM places WHERE id = ?", id).toArray()[0];
+        places.push(placeFromRow(placeRow));
+      });
+    });
 
     this.sql.exec(
       "UPDATE trip SET hotel_suggestions = ? WHERE id = ?",
       JSON.stringify(suggestions.hotels),
+      row.id,
+    );
+
+    // Second pass, informed by the actual day clusters above, so restaurant
+    // picks land near where each day actually happens.
+    let extras: { moneyTips: MoneyTip[]; restaurants: RestaurantSuggestion[] } = {
+      moneyTips: [],
+      restaurants: [],
+    };
+    if (dayClusters.some((d) => d.length > 0)) {
+      extras = await this.callOpenRouterForExtras(row.destination, dayClusters);
+    }
+    this.sql.exec(
+      "UPDATE trip SET money_tips = ?, restaurant_suggestions = ? WHERE id = ?",
+      JSON.stringify(extras.moneyTips),
+      JSON.stringify(extras.restaurants),
       row.id,
     );
 
@@ -658,17 +798,29 @@ export class TripRoom extends DurableObject<Env> {
       this.broadcastPlaces();
     }
     this.broadcastHotels();
+    this.broadcastExtras();
 
-    return { places, hotelSuggestions: suggestions.hotels };
+    return {
+      places,
+      hotelSuggestions: suggestions.hotels,
+      moneyTips: extras.moneyTips,
+      restaurantSuggestions: extras.restaurants,
+    };
   }
 
   private async callOpenRouterForItinerary(
     destination: string,
-    dayCount: number,
+    touringDays: number,
     placesToRequest: number,
     tripType: TripType,
   ): Promise<{
-    places: Array<{ name: string; dayIndex: number; category: string; notes: string; estCost: number | null }>;
+    places: Array<{
+      name: string;
+      category: string;
+      notes: string;
+      estCost: number | null;
+      estDurationMin: number;
+    }>;
     hotels: HotelSuggestion[];
   }> {
     const groupDescription = tripType === "family" ? "a family with a child" : "a group of friends";
@@ -692,16 +844,17 @@ export class TripRoom extends DurableObject<Env> {
           {
             role: "user",
             content:
-              `Destination: ${destination}. Trip length: ${dayCount} day(s). Travelers: ${groupDescription}. ` +
+              `Destination: ${destination}. Touring days: ${touringDays}. Travelers: ${groupDescription}. ` +
               `Recommend up to ${placesToRequest} real, specific points of interest (a mix of famous landmarks and ` +
-              `interesting lesser-known spots) suited to this destination and these travelers, distributed across ` +
-              `the ${dayCount} day(s) (0-indexed) in a sensible geographic/logical order, roughly grouping nearby ` +
-              `sights on the same day. Also recommend up to ${MAX_GENERATED_HOTELS} specific real hotels known for ` +
-              `good price/value (not luxury, not the cheapest hostel) in or near ${destination}, each with a one-line reason. ` +
-              `Respond with exactly this JSON shape: ` +
-              `{"places": [{"name": "<specific, searchable place name>", "dayIndex": <0-based integer>, ` +
-              `"category": "<single emoji>", "notes": "<short 1-sentence description>", ` +
-              `"estCost": <number or null, local currency>}], ` +
+              `interesting lesser-known spots) suited to this destination and these travelers — enough in total to ` +
+              `fill ${touringDays} day(s) of sightseeing without over- or under-booking any single day. Do NOT ` +
+              `assign days yourself; that is handled separately based on geography. For each place, estimate a ` +
+              `typical visit duration in minutes. Also recommend up to ${MAX_GENERATED_HOTELS} specific real hotels ` +
+              `known for good price/value (not luxury, not the cheapest hostel) in or near ${destination}, each with ` +
+              `a one-line reason. Respond with exactly this JSON shape: ` +
+              `{"places": [{"name": "<specific, searchable place name>", "category": "<single emoji>", ` +
+              `"notes": "<short 1-sentence description>", "estCost": <number or null, local currency>, ` +
+              `"estDurationMin": <typical visit duration in minutes, integer>}], ` +
               `"hotels": [{"name": "<specific hotel name>", "area": "<neighborhood/area>", ` +
               `"priceTier": "<e.g. budget, mid-range>", "note": "<short reason it's good value>"}]}`,
           },
@@ -718,7 +871,13 @@ export class TripRoom extends DurableObject<Env> {
 
     try {
       const parsed = JSON.parse(cleaned) as {
-        places?: Array<{ name?: string; dayIndex?: number; category?: string; notes?: string; estCost?: number | null }>;
+        places?: Array<{
+          name?: string;
+          category?: string;
+          notes?: string;
+          estCost?: number | null;
+          estDurationMin?: number;
+        }>;
         hotels?: Array<{ name?: string; area?: string; priceTier?: string; note?: string }>;
       };
       return {
@@ -726,10 +885,13 @@ export class TripRoom extends DurableObject<Env> {
           .filter((p) => p.name)
           .map((p) => ({
             name: p.name!,
-            dayIndex: typeof p.dayIndex === "number" ? p.dayIndex : 0,
             category: p.category ?? "📍",
             notes: p.notes ?? "",
             estCost: typeof p.estCost === "number" ? p.estCost : null,
+            estDurationMin:
+              typeof p.estDurationMin === "number" && p.estDurationMin > 0
+                ? p.estDurationMin
+                : DEFAULT_VISIT_DURATION_MIN,
           })),
         hotels: (parsed.hotels ?? [])
           .filter((h) => h.name)
@@ -742,6 +904,83 @@ export class TripRoom extends DurableObject<Env> {
       };
     } catch {
       return { places: [], hotels: [] };
+    }
+  }
+
+  private async callOpenRouterForExtras(
+    destination: string,
+    dayClusters: Array<Array<{ name: string }>>,
+  ): Promise<{ moneyTips: MoneyTip[]; restaurants: RestaurantSuggestion[] }> {
+    const dayLines = dayClusters
+      .map((dayPlaces, i) =>
+        dayPlaces.length > 0
+          ? `Day ${i + 1}: ${dayPlaces.map((p) => p.name).join(", ")}`
+          : `Day ${i + 1}: (free day, no attractions)`,
+      )
+      .join("\n");
+
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${this.env.OPENROUTER_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-v4-flash",
+        plugins: [{ id: "web", engine: "parallel", max_results: 5 }],
+        temperature: 0.3,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a budget-savvy local travel expert. Respond with ONLY a raw JSON object — no markdown fences, no prose.",
+          },
+          {
+            role: "user",
+            content:
+              `Destination: ${destination}. Planned itinerary:\n${dayLines}\n\n` +
+              `Give up to ${MAX_MONEY_TIPS} real money-saving tips for this trip — combo tickets, city passes, or ` +
+              `transit day-passes relevant to these attractions or to getting around this destination generally, ` +
+              `each with a short note on the saving. Also recommend one specific, good-value real restaurant or ` +
+              `food spot within easy walking/transit distance of each day's attractions listed above (skip free/rest ` +
+              `days). Respond with exactly this JSON shape: ` +
+              `{"moneyTips": [{"title": "<pass/ticket name>", "note": "<short reason/saving>"}], ` +
+              `"restaurants": [{"dayIndex": <0-based integer matching the day above>, ` +
+              `"name": "<specific restaurant name>", "area": "<neighborhood>", ` +
+              `"priceTier": "<e.g. budget, mid-range>", "note": "<short reason>"}]}`,
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`OpenRouter request failed (${res.status}): ${await res.text()}`);
+    }
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = data.choices?.[0]?.message?.content ?? "";
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+
+    try {
+      const parsed = JSON.parse(cleaned) as {
+        moneyTips?: Array<{ title?: string; note?: string }>;
+        restaurants?: Array<{ dayIndex?: number; name?: string; area?: string; priceTier?: string; note?: string }>;
+      };
+      return {
+        moneyTips: (parsed.moneyTips ?? [])
+          .filter((t) => t.title)
+          .map((t) => ({ title: t.title!, note: t.note ?? "" })),
+        restaurants: (parsed.restaurants ?? [])
+          .filter((r) => r.name)
+          .map((r) => ({
+            dayIndex: typeof r.dayIndex === "number" ? r.dayIndex : 0,
+            name: r.name!,
+            area: r.area ?? "",
+            priceTier: r.priceTier ?? "",
+            note: r.note ?? "",
+          })),
+      };
+    } catch {
+      return { moneyTips: [], restaurants: [] };
     }
   }
 
@@ -932,6 +1171,7 @@ export class TripRoom extends DurableObject<Env> {
     const row = this.getTripRow();
     server.send(JSON.stringify({ type: "trip", votingEnabled: row?.voting_enabled === 1 } satisfies ServerEvent));
     server.send(JSON.stringify(this.hotelsEvent()));
+    server.send(JSON.stringify(this.extrasEvent()));
     this.broadcastPresence();
     return new Response(null, { status: 101, webSocket: client });
   }

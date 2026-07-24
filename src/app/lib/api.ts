@@ -3,10 +3,12 @@ import type {
   GroupPackingItem,
   HotelSuggestion,
   Member,
+  MoneyTip,
   NewPlaceInput,
   PersonalPackingItem,
   Place,
   PlacePatch,
+  RestaurantSuggestion,
   TicketPriceResult,
   TripState,
   TripType,
@@ -24,6 +26,7 @@ export async function createTrip(input: {
   startDate: string;
   endDate: string;
   tripType?: TripType;
+  freeDays?: number;
 }): Promise<{ tripId: string; token: string }> {
   const res = await fetch("/api/trips", {
     method: "POST",
@@ -34,15 +37,22 @@ export async function createTrip(input: {
 }
 
 /**
- * Triggers AI-generated place + hotel suggestions for the trip's destination
- * (OpenRouter deepseek-v4-flash + web search, geocoded via Nominatim). Takes
- * ~10-20s since each suggested place is geocoded sequentially. Best-effort —
- * callers should let trip creation proceed even if this fails or times out.
+ * Triggers AI-generated place, hotel, money-tip, and restaurant suggestions
+ * for the trip's destination (OpenRouter deepseek-v4-flash + web search,
+ * geocoded via Nominatim, then clustered into days by geography + estimated
+ * visit duration). Takes ~30-60s across two sequential OpenRouter calls plus
+ * per-place geocoding. Best-effort — callers should let trip creation proceed
+ * even if this fails or times out.
  */
 export async function generateItinerary(
   tripId: string,
   token: string,
-): Promise<{ places: Place[]; hotelSuggestions: HotelSuggestion[] }> {
+): Promise<{
+  places: Place[];
+  hotelSuggestions: HotelSuggestion[];
+  moneyTips: MoneyTip[];
+  restaurantSuggestions: RestaurantSuggestion[];
+}> {
   const res = await fetch(`/api/trip/${tripId}/generate?k=${encodeURIComponent(token)}`, {
     method: "POST",
   });

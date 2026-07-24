@@ -6,11 +6,13 @@ export default function DayTabs({
   days,
   selectedDay,
   dayCoords,
+  freeDays = 0,
   onSelect,
 }: {
   days: string[];
   selectedDay: number;
   dayCoords: Array<{ lat: number; lng: number } | null>;
+  freeDays?: number;
   onSelect: (index: number) => void;
 }) {
   const { t, lang } = useI18n();
@@ -18,6 +20,7 @@ export default function DayTabs({
     <div className="flex gap-1 overflow-x-auto border-b border-rule bg-cream px-3 py-2">
       {days.map((iso, index) => {
         const coord = dayCoords[index];
+        const isFree = freeDays > 0 && index >= days.length - freeDays;
         return (
           <button
             key={iso}
@@ -29,6 +32,7 @@ export default function DayTabs({
           >
             <span>
               {t("day.label", { n: index + 1 })} · {formatDayLabel(iso, lang)}
+              {isFree && ` 🌴 ${t("day.freeBadge")}`}
             </span>
             {coord && <WeatherChip lat={coord.lat} lng={coord.lng} date={iso} />}
           </button>

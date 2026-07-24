@@ -1,7 +1,8 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { TripType } from "../../shared/types";
 import { createTrip, generateItinerary } from "../lib/api";
+import { tripDays } from "../lib/days";
 import { useI18n } from "../lib/i18n";
 import LanguageToggle from "../components/LanguageToggle";
 
@@ -13,15 +14,30 @@ export default function HomePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [tripType, setTripType] = useState<TripType>("friends");
+  const [freeDays, setFreeDays] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"idle" | "creating" | "generating">("idle");
+
+  const totalDays = useMemo(
+    () => (startDate && endDate ? tripDays(startDate, endDate).length : 0),
+    [startDate, endDate],
+  );
+  const maxFreeDays = Math.max(0, totalDays - 1);
+  const clampedFreeDays = Math.min(freeDays, maxFreeDays);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setPhase("creating");
     try {
-      const { tripId, token } = await createTrip({ title, destination, startDate, endDate, tripType });
+      const { tripId, token } = await createTrip({
+        title,
+        destination,
+        startDate,
+        endDate,
+        tripType,
+        freeDays: clampedFreeDays,
+      });
       setPhase("generating");
       // Best-effort: a missing/misbehaving OPENROUTER_API_KEY shouldn't block
       // trip creation — the trip page works fine with zero AI-suggested places.
@@ -112,6 +128,22 @@ export default function HomePage() {
               </button>
             </div>
           </div>
+          <label className="block text-sm text-ink-soft">
+            {t("home.freeDays")}
+            <input
+              type="number"
+              min={0}
+              max={maxFreeDays}
+              value={clampedFreeDays}
+              onChange={(e) => setFreeDays(Math.max(0, Number(e.target.value)))}
+              className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 text-ink outline-none focus:border-terracotta"
+            />
+            {totalDays > 0 && (
+              <span className="mt-1 block text-xs text-ink/50">
+                {t("home.freeDaysHint", { n: clampedFreeDays, total: totalDays })}
+              </span>
+            )}
+          </label>
           {error && <p className="text-sm text-red-700">{error}</p>}
           <button
             type="submit"

@@ -9,6 +9,8 @@ export interface Dictionary {
   "home.tripType": string;
   "home.tripTypeFriends": string;
   "home.tripTypeFamily": string;
+  "home.freeDays": string;
+  "home.freeDaysHint": string; // "{n} of {total} days left free"
   "home.createButton": string;
   "home.creating": string;
   "home.generating": string;
@@ -34,6 +36,7 @@ export interface Dictionary {
   "header.votingOff": string;
 
   "day.label": string; // "Day {n}"
+  "day.freeBadge": string;
 
   "dayof.today": string;
   "dayof.next": string;
@@ -73,6 +76,10 @@ export interface Dictionary {
   "hotels.empty": string;
   "hotels.search": string;
 
+  "moneyTips.title": string;
+
+  "restaurant.suggestionPrefix": string; // "Try:"
+
   "export.noPlacesPlanned": string;
   "export.noSharedItems": string;
   "export.checklistOf": string; // "{emoji} {name}'s checklist"
@@ -91,9 +98,11 @@ export const en: Dictionary = {
   "home.tripType": "Trip type",
   "home.tripTypeFriends": "Friends",
   "home.tripTypeFamily": "Family",
+  "home.freeDays": "Free days (no plans)",
+  "home.freeDaysHint": "{n} of {total} day(s) left free — the rest get AI-recommended places",
   "home.createButton": "Create trip",
   "home.creating": "Creating…",
-  "home.generating": "Finding great spots for your trip… (~30-45s)",
+  "home.generating": "Finding great spots for your trip… (~45-75s)",
 
   "join.yourName": "Your name",
   "join.namePlaceholder": "Kevin",
@@ -116,6 +125,7 @@ export const en: Dictionary = {
   "header.votingOff": "Voting: off",
 
   "day.label": "Day {n}",
+  "day.freeBadge": "free",
 
   "dayof.today": "TODAY",
   "dayof.next": "Next",
@@ -155,6 +165,10 @@ export const en: Dictionary = {
   "hotels.empty": "No hotel suggestions yet.",
   "hotels.search": "search",
 
+  "moneyTips.title": "Money-saving tips",
+
+  "restaurant.suggestionPrefix": "Try:",
+
   "export.noPlacesPlanned": "No places planned.",
   "export.noSharedItems": "No shared items.",
   "export.checklistOf": "{emoji} {name}'s checklist",
@@ -173,9 +187,11 @@ export const zh: Dictionary = {
   "home.tripType": "行程类型",
   "home.tripTypeFriends": "朋友",
   "home.tripTypeFamily": "家庭",
+  "home.freeDays": "自由活动天数（不安排行程）",
+  "home.freeDaysHint": "{total}天中留{n}天自由活动 —— 其余由AI推荐地点",
   "home.createButton": "创建行程",
   "home.creating": "创建中…",
-  "home.generating": "正在为你寻找推荐地点…（约30-45秒）",
+  "home.generating": "正在为你寻找推荐地点…（约45-75秒）",
 
   "join.yourName": "你的名字",
   "join.namePlaceholder": "小凯",
@@ -198,6 +214,7 @@ export const zh: Dictionary = {
   "header.votingOff": "投票：关闭",
 
   "day.label": "第{n}天",
+  "day.freeBadge": "自由",
 
   "dayof.today": "今天",
   "dayof.next": "下一站",
@@ -236,6 +253,10 @@ export const zh: Dictionary = {
   "hotels.title": "推荐酒店",
   "hotels.empty": "暂无酒店推荐。",
   "hotels.search": "搜索",
+
+  "moneyTips.title": "省钱贴士",
+
+  "restaurant.suggestionPrefix": "推荐：",
 
   "export.noPlacesPlanned": "还没有计划的地点。",
   "export.noSharedItems": "还没有共用物品。",

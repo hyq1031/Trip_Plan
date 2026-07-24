@@ -10,6 +10,8 @@ export interface Trip {
   tripType: TripType;
   /** When false, undecided/voting UI is hidden and new places default straight to "planned". */
   votingEnabled: boolean;
+  /** Number of trailing days left unplanned by AI generation (e.g. 1 = last day is free). */
+  freeDays: number;
 }
 
 export type AgeGroup = "adult" | "teen" | "child" | "infant";
@@ -93,6 +95,21 @@ export interface HotelSuggestion {
   note: string;
 }
 
+/** AI-suggested combo ticket / city pass / transit day-pass, reasoning only — no live prices. */
+export interface MoneyTip {
+  title: string;
+  note: string;
+}
+
+/** AI-suggested restaurant near a specific day's cluster of places. */
+export interface RestaurantSuggestion {
+  dayIndex: number;
+  name: string;
+  area: string;
+  priceTier: string;
+  note: string;
+}
+
 export interface TripState {
   trip: Trip;
   members: Member[];
@@ -100,6 +117,8 @@ export interface TripState {
   groupPacking: GroupPackingItem[];
   personalPacking: PersonalPackingItem[];
   hotelSuggestions: HotelSuggestion[];
+  moneyTips: MoneyTip[];
+  restaurantSuggestions: RestaurantSuggestion[];
 }
 
 export type ServerEvent =
@@ -107,4 +126,5 @@ export type ServerEvent =
   | { type: "places"; places: Place[]; version: number }
   | { type: "packing"; groupPacking: GroupPackingItem[]; personalPacking: PersonalPackingItem[] }
   | { type: "trip"; votingEnabled: boolean }
-  | { type: "hotels"; hotelSuggestions: HotelSuggestion[] };
+  | { type: "hotels"; hotelSuggestions: HotelSuggestion[] }
+  | { type: "extras"; moneyTips: MoneyTip[]; restaurantSuggestions: RestaurantSuggestion[] };

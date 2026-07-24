@@ -9,6 +9,7 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
   const setPacking = useTripStore((s) => s.setPacking);
   const setVotingEnabled = useTripStore((s) => s.setVotingEnabled);
   const setHotelSuggestions = useTripStore((s) => s.setHotelSuggestions);
+  const setExtras = useTripStore((s) => s.setExtras);
   const setConnected = useTripStore((s) => s.setConnected);
   const retryDelay = useRef(1000);
 
@@ -33,6 +34,7 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
         if (data.type === "packing") setPacking(data.groupPacking, data.personalPacking);
         if (data.type === "trip") setVotingEnabled(data.votingEnabled);
         if (data.type === "hotels") setHotelSuggestions(data.hotelSuggestions);
+        if (data.type === "extras") setExtras(data.moneyTips, data.restaurantSuggestions);
       };
 
       ws.onclose = () => {
@@ -59,6 +61,7 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
     setPacking,
     setVotingEnabled,
     setHotelSuggestions,
+    setExtras,
     setConnected,
   ]);
 }

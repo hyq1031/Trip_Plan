@@ -28,6 +28,7 @@ app.post("/api/trips", async (c) => {
     startDate: string;
     endDate: string;
     tripType?: TripType;
+    freeDays?: number;
   }>();
   if (!body.title || !body.startDate || !body.endDate) {
     return c.json({ error: "title, startDate, endDate are required" }, 400);
@@ -43,6 +44,7 @@ app.post("/api/trips", async (c) => {
     endDate: body.endDate,
     token,
     tripType: body.tripType,
+    freeDays: body.freeDays,
   });
   return c.json({ tripId, token });
 });

@@ -27,10 +27,12 @@ import { useTripSocket } from "../lib/useTripSocket";
 import { useTripStore } from "../store/tripStore";
 import AddPlaceForm from "../components/AddPlaceForm";
 import DayOfBanner from "../components/DayOfBanner";
+import DayRestaurant from "../components/DayRestaurant";
 import DayTabs from "../components/DayTabs";
 import HotelSuggestions from "../components/HotelSuggestions";
 import LanguageToggle from "../components/LanguageToggle";
 import MapView from "../components/MapView";
+import MoneyTips from "../components/MoneyTips";
 import PackingPanel from "../components/PackingPanel";
 import PresenceBar from "../components/PresenceBar";
 import Timeline from "../components/Timeline";
@@ -50,6 +52,8 @@ export default function TripPage() {
     groupPacking,
     personalPacking,
     hotelSuggestions,
+    moneyTips,
+    restaurantSuggestions,
     connected,
     selectedDay,
     selectedPlaceId,
@@ -82,6 +86,8 @@ export default function TripPage() {
           state.groupPacking,
           state.personalPacking,
           state.hotelSuggestions,
+          state.moneyTips,
+          state.restaurantSuggestions,
         );
         const todayIdx = todayDayIndex(tripDays(state.trip.startDate, state.trip.endDate));
         if (todayIdx !== null) setSelectedDay(todayIdx);
@@ -123,6 +129,7 @@ export default function TripPage() {
 
   const dayTotal = dayPlaces.reduce((sum, p) => sum + (p.estCost ?? 0), 0);
   const tripTotal = places.reduce((sum, p) => sum + (p.estCost ?? 0), 0);
+  const dayRestaurant = restaurantSuggestions.find((r) => r.dayIndex === selectedDay);
 
   async function handleJoin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -341,7 +348,13 @@ export default function TripPage() {
 
       {tab === "itinerary" ? (
         <>
-          <DayTabs days={days} selectedDay={selectedDay} dayCoords={dayCoords} onSelect={setSelectedDay} />
+          <DayTabs
+            days={days}
+            selectedDay={selectedDay}
+            dayCoords={dayCoords}
+            freeDays={trip.freeDays}
+            onSelect={setSelectedDay}
+          />
 
           {todayIdx !== null && selectedDay === todayIdx && (
             <DayOfBanner
@@ -363,6 +376,8 @@ export default function TripPage() {
             tripStartDate={trip.startDate}
             tripEndDate={trip.endDate}
           />
+          <MoneyTips tips={moneyTips} />
+          <DayRestaurant suggestion={dayRestaurant} />
 
           <div className="h-[42vh] shrink-0 border-b border-rule">
             <MapView

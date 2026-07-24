@@ -3,8 +3,10 @@ import type {
   GroupPackingItem,
   HotelSuggestion,
   Member,
+  MoneyTip,
   PersonalPackingItem,
   Place,
+  RestaurantSuggestion,
   Trip,
 } from "../../shared/types";
 
@@ -16,6 +18,8 @@ interface TripStore {
   groupPacking: GroupPackingItem[];
   personalPacking: PersonalPackingItem[];
   hotelSuggestions: HotelSuggestion[];
+  moneyTips: MoneyTip[];
+  restaurantSuggestions: RestaurantSuggestion[];
   selectedDay: number;
   selectedPlaceId: string | null;
   connected: boolean;
@@ -26,10 +30,13 @@ interface TripStore {
     groupPacking: GroupPackingItem[],
     personalPacking: PersonalPackingItem[],
     hotelSuggestions: HotelSuggestion[],
+    moneyTips: MoneyTip[],
+    restaurantSuggestions: RestaurantSuggestion[],
   ) => void;
   setPresence: (members: Member[]) => void;
   setVotingEnabled: (votingEnabled: boolean) => void;
   setHotelSuggestions: (hotelSuggestions: HotelSuggestion[]) => void;
+  setExtras: (moneyTips: MoneyTip[], restaurantSuggestions: RestaurantSuggestion[]) => void;
   /** Server broadcast / reconnect snapshot. Ignores out-of-order deliveries older than what we already have. */
   setPlaces: (places: Place[], version?: number) => void;
   /** Optimistic local update from a REST response, applied before the WS broadcast round-trip arrives. */
@@ -54,15 +61,36 @@ export const useTripStore = create<TripStore>((set) => ({
   groupPacking: [],
   personalPacking: [],
   hotelSuggestions: [],
+  moneyTips: [],
+  restaurantSuggestions: [],
   selectedDay: 0,
   selectedPlaceId: null,
   connected: false,
-  setTripState: (trip, members, places, groupPacking, personalPacking, hotelSuggestions) =>
-    set({ trip, members, places, groupPacking, personalPacking, hotelSuggestions }),
+  setTripState: (
+    trip,
+    members,
+    places,
+    groupPacking,
+    personalPacking,
+    hotelSuggestions,
+    moneyTips,
+    restaurantSuggestions,
+  ) =>
+    set({
+      trip,
+      members,
+      places,
+      groupPacking,
+      personalPacking,
+      hotelSuggestions,
+      moneyTips,
+      restaurantSuggestions,
+    }),
   setPresence: (members) => set({ members }),
   setVotingEnabled: (votingEnabled) =>
     set((state) => (state.trip ? { trip: { ...state.trip, votingEnabled } } : state)),
   setHotelSuggestions: (hotelSuggestions) => set({ hotelSuggestions }),
+  setExtras: (moneyTips, restaurantSuggestions) => set({ moneyTips, restaurantSuggestions }),
   setPlaces: (places, version) =>
     set((state) =>
       version !== undefined && version < state.placesVersion
@@ -116,6 +144,8 @@ export const useTripStore = create<TripStore>((set) => ({
       groupPacking: [],
       personalPacking: [],
       hotelSuggestions: [],
+      moneyTips: [],
+      restaurantSuggestions: [],
       selectedDay: 0,
       selectedPlaceId: null,
       connected: false,
