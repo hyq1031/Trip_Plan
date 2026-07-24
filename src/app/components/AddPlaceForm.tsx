@@ -4,8 +4,10 @@ import { useI18n } from "../lib/i18n";
 
 export default function AddPlaceForm({
   onAdd,
+  votingEnabled,
 }: {
   onAdd: (result: GeocodeResult, upForVote: boolean) => void;
+  votingEnabled: boolean;
 }) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
@@ -31,7 +33,7 @@ export default function AddPlaceForm({
   }, [query]);
 
   function pick(result: GeocodeResult) {
-    onAdd(result, upForVote);
+    onAdd(result, votingEnabled && upForVote);
     setQuery("");
     setResults([]);
   }
@@ -44,14 +46,16 @@ export default function AddPlaceForm({
         placeholder={t("addPlace.searchPlaceholder")}
         className="w-full rounded border border-ink/20 px-3 py-2 text-sm"
       />
-      <label className="mt-2 flex items-center gap-1.5 text-xs text-ink/60">
-        <input
-          type="checkbox"
-          checked={upForVote}
-          onChange={(e) => setUpForVote(e.target.checked)}
-        />
-        {t("addPlace.upForVoteLabel")}
-      </label>
+      {votingEnabled && (
+        <label className="mt-2 flex items-center gap-1.5 text-xs text-ink/60">
+          <input
+            type="checkbox"
+            checked={upForVote}
+            onChange={(e) => setUpForVote(e.target.checked)}
+          />
+          {t("addPlace.upForVoteLabel")}
+        </label>
+      )}
       {loading && <p className="mt-1 text-xs text-ink/40">{t("addPlace.searching")}</p>}
       {results.length > 0 && (
         <ul className="absolute inset-x-3 z-[1000] mt-1 max-h-56 overflow-auto rounded border border-ink/20 bg-white shadow-lg">

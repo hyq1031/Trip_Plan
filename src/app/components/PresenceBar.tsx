@@ -6,7 +6,7 @@ export default function PresenceBar({ members, connected }: { members: Member[];
       {members.map((m) => (
         <span
           key={m.id}
-          title={`${m.name}${m.online ? "" : " (offline)"}`}
+          title={`${m.name}${m.online ? "" : " (offline)"}${m.notes ? ` — ${m.notes}` : ""}`}
           className="flex h-8 w-8 items-center justify-center rounded-full text-sm"
           style={{ backgroundColor: m.color, opacity: m.online ? 1 : 0.35 }}
         >

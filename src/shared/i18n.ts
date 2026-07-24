@@ -4,11 +4,21 @@ export interface Dictionary {
   "home.tripTitlePlaceholder": string;
   "home.start": string;
   "home.end": string;
+  "home.tripType": string;
+  "home.tripTypeFriends": string;
+  "home.tripTypeFamily": string;
   "home.createButton": string;
   "home.creating": string;
 
   "join.yourName": string;
   "join.namePlaceholder": string;
+  "join.ageGroup": string;
+  "join.ageGroupAdult": string;
+  "join.ageGroupTeen": string;
+  "join.ageGroupChild": string;
+  "join.ageGroupInfant": string;
+  "join.medicalNotes": string;
+  "join.medicalNotesPlaceholder": string;
   "join.joinButton": string;
 
   "trip.notFound": string;
@@ -17,6 +27,8 @@ export interface Dictionary {
   "header.itinerary": string;
   "header.packing": string;
   "header.export": string;
+  "header.votingOn": string;
+  "header.votingOff": string;
 
   "day.label": string; // "Day {n}"
 
@@ -33,6 +45,7 @@ export interface Dictionary {
   "timeline.noPlaces": string;
   "timeline.upForVote": string;
   "timeline.promote": string;
+  "timeline.markPlanned": string;
   "timeline.findHotels": string;
   "timeline.checkPrice": string;
   "timeline.checking": string;
@@ -56,6 +69,7 @@ export interface Dictionary {
   "export.noPlacesPlanned": string;
   "export.noSharedItems": string;
   "export.checklistOf": string; // "{emoji} {name}'s checklist"
+  "export.memberNotes": string; // "Notes: {notes}"
   "export.footer": string;
 }
 
@@ -65,11 +79,21 @@ export const en: Dictionary = {
   "home.tripTitlePlaceholder": "Tokyo with friends",
   "home.start": "Start",
   "home.end": "End",
+  "home.tripType": "Trip type",
+  "home.tripTypeFriends": "Friends",
+  "home.tripTypeFamily": "Family",
   "home.createButton": "Create trip",
   "home.creating": "Creating…",
 
   "join.yourName": "Your name",
   "join.namePlaceholder": "Kevin",
+  "join.ageGroup": "Age group",
+  "join.ageGroupAdult": "Adult",
+  "join.ageGroupTeen": "Teen",
+  "join.ageGroupChild": "Child",
+  "join.ageGroupInfant": "Infant",
+  "join.medicalNotes": "Medical / allergy notes (optional)",
+  "join.medicalNotesPlaceholder": "e.g. peanut allergy, asthma inhaler",
   "join.joinButton": "Join trip",
 
   "trip.notFound": "Couldn't open this trip — the link may be wrong or expired.",
@@ -78,6 +102,8 @@ export const en: Dictionary = {
   "header.itinerary": "Itinerary",
   "header.packing": "Packing",
   "header.export": "Export",
+  "header.votingOn": "Voting: on",
+  "header.votingOff": "Voting: off",
 
   "day.label": "Day {n}",
 
@@ -94,6 +120,7 @@ export const en: Dictionary = {
   "timeline.noPlaces": "No places yet — add your first stop below.",
   "timeline.upForVote": "up for vote",
   "timeline.promote": "promote to plan",
+  "timeline.markPlanned": "mark as planned",
   "timeline.findHotels": "find hotels",
   "timeline.checkPrice": "check ticket price",
   "timeline.checking": "checking…",
@@ -117,6 +144,7 @@ export const en: Dictionary = {
   "export.noPlacesPlanned": "No places planned.",
   "export.noSharedItems": "No shared items.",
   "export.checklistOf": "{emoji} {name}'s checklist",
+  "export.memberNotes": "Notes: {notes}",
   "export.footer": "Exported from Friend Trip · works fully offline · nav links open your phone's map app when you have signal",
 };
 
@@ -126,11 +154,21 @@ export const zh: Dictionary = {
   "home.tripTitlePlaceholder": "和朋友一起去东京",
   "home.start": "开始日期",
   "home.end": "结束日期",
+  "home.tripType": "行程类型",
+  "home.tripTypeFriends": "朋友",
+  "home.tripTypeFamily": "家庭",
   "home.createButton": "创建行程",
   "home.creating": "创建中…",
 
   "join.yourName": "你的名字",
   "join.namePlaceholder": "小凯",
+  "join.ageGroup": "年龄组",
+  "join.ageGroupAdult": "成人",
+  "join.ageGroupTeen": "青少年",
+  "join.ageGroupChild": "儿童",
+  "join.ageGroupInfant": "婴儿",
+  "join.medicalNotes": "医疗/过敏备注（选填）",
+  "join.medicalNotesPlaceholder": "例如：花生过敏、哮喘吸入器",
   "join.joinButton": "加入行程",
 
   "trip.notFound": "无法打开此行程 —— 链接可能有误或已过期。",
@@ -139,6 +177,8 @@ export const zh: Dictionary = {
   "header.itinerary": "行程",
   "header.packing": "打包清单",
   "header.export": "导出",
+  "header.votingOn": "投票：开启",
+  "header.votingOff": "投票：关闭",
 
   "day.label": "第{n}天",
 
@@ -155,6 +195,7 @@ export const zh: Dictionary = {
   "timeline.noPlaces": "还没有地点 —— 在下方添加第一站吧。",
   "timeline.upForVote": "待投票",
   "timeline.promote": "确定加入行程",
+  "timeline.markPlanned": "标记为已计划",
   "timeline.findHotels": "查找酒店",
   "timeline.checkPrice": "查询门票价格",
   "timeline.checking": "查询中…",
@@ -178,6 +219,7 @@ export const zh: Dictionary = {
   "export.noPlacesPlanned": "还没有计划的地点。",
   "export.noSharedItems": "还没有共用物品。",
   "export.checklistOf": "{emoji} {name} 的清单",
+  "export.memberNotes": "备注：{notes}",
   "export.footer": "由 Friend Trip 导出 · 完全离线可用 · 导航链接需要有网络信号时打开手机地图应用",
 };
 

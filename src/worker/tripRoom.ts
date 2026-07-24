@@ -2,6 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import { nanoid } from "nanoid";
 import type { Env } from "./env";
 import type {
+  AgeGroup,
   GroupPackingItem,
   Member,
   NewPlaceInput,
@@ -12,9 +13,10 @@ import type {
   TicketPriceResult,
   Trip,
   TripState,
+  TripType,
 } from "../shared/types";
 import { pickAvatar } from "../shared/avatar";
-import { PERSONAL_PACKING_TEMPLATE } from "../shared/packingTemplate";
+import { PACKING_TEMPLATES } from "../shared/packingTemplate";
 
 type TripRow = Record<string, SqlStorageValue> & {
   id: string;
@@ -23,6 +25,8 @@ type TripRow = Record<string, SqlStorageValue> & {
   end_date: string;
   token: string;
   version: number;
+  trip_type: string;
+  voting_enabled: number;
 };
 
 type MemberRow = Record<string, SqlStorageValue> & {
@@ -31,6 +35,8 @@ type MemberRow = Record<string, SqlStorageValue> & {
   color: string;
   emoji: string;
   current_place_id: string | null;
+  age_group: string;
+  notes: string;
 };
 
 type PlaceRow = Record<string, SqlStorageValue> & {
@@ -127,7 +133,9 @@ export class TripRoom extends DurableObject<Env> {
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL,
         token TEXT NOT NULL,
-        version INTEGER NOT NULL DEFAULT 0
+        version INTEGER NOT NULL DEFAULT 0,
+        trip_type TEXT NOT NULL DEFAULT 'friends',
+        voting_enabled INTEGER NOT NULL DEFAULT 1
       )
     `);
     this.sql.exec(`
@@ -136,7 +144,9 @@ export class TripRoom extends DurableObject<Env> {
         name TEXT NOT NULL,
         color TEXT NOT NULL,
         emoji TEXT NOT NULL,
-        current_place_id TEXT
+        current_place_id TEXT,
+        age_group TEXT NOT NULL DEFAULT 'adult',
+        notes TEXT NOT NULL DEFAULT ''
       )
     `);
     this.sql.exec(`
@@ -222,6 +232,8 @@ export class TripRoom extends DurableObject<Env> {
         emoji: row.emoji,
         online: online.has(row.id),
         currentPlaceId: row.current_place_id,
+        ageGroup: row.age_group as AgeGroup,
+        notes: row.notes,
       }));
   }
 
@@ -286,6 +298,15 @@ export class TripRoom extends DurableObject<Env> {
     }
   }
 
+  private broadcastTrip() {
+    const row = this.getTripRow();
+    const event: ServerEvent = { type: "trip", votingEnabled: row?.voting_enabled === 1 };
+    const payload = JSON.stringify(event);
+    for (const ws of this.ctx.getWebSockets()) {
+      ws.send(payload);
+    }
+  }
+
   // --- RPC methods (called directly on the stub from the Worker) ---
 
   async createTrip(input: {
@@ -294,14 +315,21 @@ export class TripRoom extends DurableObject<Env> {
     startDate: string;
     endDate: string;
     token: string;
+    tripType?: TripType;
   }): Promise<void> {
+    const tripType: TripType = input.tripType ?? "friends";
+    // Family trips default to a top-down (no-voting) mode; friend trips default to voting on.
+    const votingEnabled = tripType === "friends";
     this.sql.exec(
-      "INSERT OR IGNORE INTO trip (id, title, start_date, end_date, token, version) VALUES (?, ?, ?, ?, ?, 0)",
+      `INSERT OR IGNORE INTO trip (id, title, start_date, end_date, token, version, trip_type, voting_enabled)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
       input.id,
       input.title,
       input.startDate,
       input.endDate,
       input.token,
+      tripType,
+      votingEnabled ? 1 : 0,
     );
   }
 
@@ -314,6 +342,8 @@ export class TripRoom extends DurableObject<Env> {
       startDate: row.start_date,
       endDate: row.end_date,
       version: row.version,
+      tripType: row.trip_type as TripType,
+      votingEnabled: row.voting_enabled === 1,
     };
     return {
       trip,
@@ -324,18 +354,42 @@ export class TripRoom extends DurableObject<Env> {
     };
   }
 
+  async updateTripSettings(
+    token: string,
+    patch: { votingEnabled?: boolean },
+  ): Promise<{ ok: true } | { error: string }> {
+    if (!this.checkToken(token)) return { error: "forbidden" };
+    if ("votingEnabled" in patch) {
+      this.sql.exec(
+        "UPDATE trip SET voting_enabled = ? WHERE id = (SELECT id FROM trip LIMIT 1)",
+        patch.votingEnabled ? 1 : 0,
+      );
+    }
+    this.broadcastTrip();
+    return { ok: true };
+  }
+
   async join(
     token: string,
     memberId: string,
     name: string,
     lang: "en" | "zh" = "en",
+    ageGroup: AgeGroup = "adult",
+    notes = "",
   ): Promise<Member | { error: string }> {
     if (!this.checkToken(token)) return { error: "forbidden" };
     const existing = this.sql
       .exec<MemberRow>("SELECT * FROM members WHERE id = ?", memberId)
       .toArray()[0];
     if (existing) {
-      this.sql.exec("UPDATE members SET name = ? WHERE id = ?", name, memberId);
+      this.sql.exec(
+        "UPDATE members SET name = ?, age_group = ?, notes = ? WHERE id = ?",
+        name,
+        ageGroup,
+        notes,
+        memberId,
+      );
+      this.broadcastPresence();
       return {
         id: memberId,
         name,
@@ -343,6 +397,8 @@ export class TripRoom extends DurableObject<Env> {
         emoji: existing.emoji,
         online: false,
         currentPlaceId: existing.current_place_id,
+        ageGroup,
+        notes,
       };
     }
     const count = this.sql.exec("SELECT COUNT(*) as n FROM members").toArray()[0] as
@@ -350,13 +406,15 @@ export class TripRoom extends DurableObject<Env> {
       | undefined;
     const avatar = pickAvatar(count?.n ?? 0);
     this.sql.exec(
-      "INSERT INTO members (id, name, color, emoji) VALUES (?, ?, ?, ?)",
+      "INSERT INTO members (id, name, color, emoji, age_group, notes) VALUES (?, ?, ?, ?, ?, ?)",
       memberId,
       name,
       avatar.color,
       avatar.emoji,
+      ageGroup,
+      notes,
     );
-    for (const itemName of PERSONAL_PACKING_TEMPLATE[lang]) {
+    for (const itemName of PACKING_TEMPLATES[lang][ageGroup]) {
       this.sql.exec(
         "INSERT INTO personal_packing (id, member_id, name, checked) VALUES (?, ?, ?, 0)",
         nanoid(10),
@@ -365,7 +423,7 @@ export class TripRoom extends DurableObject<Env> {
       );
     }
     this.broadcastPacking();
-    return { id: memberId, name, ...avatar, online: false, currentPlaceId: null };
+    return { id: memberId, name, ...avatar, online: false, currentPlaceId: null, ageGroup, notes };
   }
 
   async setCurrentPlace(
@@ -675,6 +733,8 @@ export class TripRoom extends DurableObject<Env> {
     // stay stale until the *next* mutation happened to fire.
     server.send(JSON.stringify(this.placesEvent()));
     server.send(JSON.stringify(this.packingEvent()));
+    const row = this.getTripRow();
+    server.send(JSON.stringify({ type: "trip", votingEnabled: row?.voting_enabled === 1 } satisfies ServerEvent));
     this.broadcastPresence();
     return new Response(null, { status: 101, webSocket: client });
   }

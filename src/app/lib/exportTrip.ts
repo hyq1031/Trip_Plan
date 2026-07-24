@@ -1,5 +1,6 @@
 import type { GroupPackingItem, Member, PersonalPackingItem, Place, Trip } from "../../shared/types";
 import { type Lang, dictionaries } from "../../shared/i18n";
+import { AGE_GROUP_EMOJI } from "../../shared/packingTemplate";
 import { formatDayLabel, tripDays } from "./days";
 import { buildNavLinks } from "./navLinks";
 
@@ -99,8 +100,12 @@ export function buildOfflineHtml(
     .map((m) => {
       const items = personalPacking.filter((i) => i.memberId === m.id);
       if (items.length === 0) return "";
+      const ageBadge = AGE_GROUP_EMOJI[m.ageGroup];
       const heading = fmt(t["export.checklistOf"], { emoji: m.emoji, name: m.name });
-      return `<h2>${esc(heading)}</h2><ul>${items
+      const notesLine = m.notes
+        ? `<p class="notes">${esc(fmt(t["export.memberNotes"], { notes: m.notes }))}</p>`
+        : "";
+      return `<h2>${ageBadge ? `${esc(ageBadge)} ` : ""}${esc(heading)}</h2>${notesLine}<ul>${items
         .map((i) => `<li class="pack"><span class="${i.checked ? "checked" : ""}">${esc(i.name)}</span></li>`)
         .join("")}</ul>`;
     })

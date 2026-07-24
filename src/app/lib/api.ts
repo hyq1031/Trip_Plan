@@ -1,4 +1,5 @@
 import type {
+  AgeGroup,
   GroupPackingItem,
   Member,
   NewPlaceInput,
@@ -7,6 +8,7 @@ import type {
   PlacePatch,
   TicketPriceResult,
   TripState,
+  TripType,
 } from "../../shared/types";
 
 async function parseJson<T>(res: Response): Promise<T> {
@@ -19,6 +21,7 @@ export async function createTrip(input: {
   title: string;
   startDate: string;
   endDate: string;
+  tripType?: TripType;
 }): Promise<{ tripId: string; token: string }> {
   const res = await fetch("/api/trips", {
     method: "POST",
@@ -39,13 +42,28 @@ export async function joinTrip(
   memberId: string,
   name: string,
   lang: "en" | "zh" = "en",
+  ageGroup: AgeGroup = "adult",
+  notes = "",
 ): Promise<Member> {
   const res = await fetch(`/api/trip/${tripId}/join?k=${encodeURIComponent(token)}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ memberId, name, lang }),
+    body: JSON.stringify({ memberId, name, lang, ageGroup, notes }),
   });
   return parseJson(res);
+}
+
+export async function updateTripSettings(
+  tripId: string,
+  token: string,
+  patch: { votingEnabled?: boolean },
+): Promise<void> {
+  const res = await fetch(`/api/trip/${tripId}/settings?k=${encodeURIComponent(token)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  await parseJson(res);
 }
 
 export function tripSocketUrl(tripId: string, token: string, memberId: string): string {

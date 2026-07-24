@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { nanoid } from "nanoid";
 import { TripRoom } from "./tripRoom";
 import type { Env } from "./env";
-import type { NewPlaceInput, PlacePatch } from "../shared/types";
+import type { AgeGroup, NewPlaceInput, PlacePatch, TripType } from "../shared/types";
 
 export { TripRoom };
 
@@ -22,14 +22,26 @@ function errStatus(error: string): 400 | 403 | 404 {
 app.get("/api/health", (c) => c.json({ ok: true }));
 
 app.post("/api/trips", async (c) => {
-  const body = await c.req.json<{ title: string; startDate: string; endDate: string }>();
+  const body = await c.req.json<{
+    title: string;
+    startDate: string;
+    endDate: string;
+    tripType?: TripType;
+  }>();
   if (!body.title || !body.startDate || !body.endDate) {
     return c.json({ error: "title, startDate, endDate are required" }, 400);
   }
   const tripId = nanoid(8);
   const token = nanoid(21);
   const stub = stubFor(c.env, tripId);
-  await stub.createTrip({ id: tripId, title: body.title, startDate: body.startDate, endDate: body.endDate, token });
+  await stub.createTrip({
+    id: tripId,
+    title: body.title,
+    startDate: body.startDate,
+    endDate: body.endDate,
+    token,
+    tripType: body.tripType,
+  });
   return c.json({ tripId, token });
 });
 
@@ -43,12 +55,34 @@ app.get("/api/trip/:id/state", async (c) => {
 
 app.post("/api/trip/:id/join", async (c) => {
   const token = c.req.query("k") ?? "";
-  const body = await c.req.json<{ memberId: string; name: string; lang?: "en" | "zh" }>();
+  const body = await c.req.json<{
+    memberId: string;
+    name: string;
+    lang?: "en" | "zh";
+    ageGroup?: AgeGroup;
+    notes?: string;
+  }>();
   if (!body.memberId || !body.name) {
     return c.json({ error: "memberId and name are required" }, 400);
   }
   const stub = stubFor(c.env, c.req.param("id"));
-  const result = await stub.join(token, body.memberId, body.name, body.lang ?? "en");
+  const result = await stub.join(
+    token,
+    body.memberId,
+    body.name,
+    body.lang ?? "en",
+    body.ageGroup ?? "adult",
+    body.notes ?? "",
+  );
+  if ("error" in result) return c.json(result, errStatus(result.error));
+  return c.json(result);
+});
+
+app.patch("/api/trip/:id/settings", async (c) => {
+  const token = c.req.query("k") ?? "";
+  const body = await c.req.json<{ votingEnabled?: boolean }>();
+  const stub = stubFor(c.env, c.req.param("id"));
+  const result = await stub.updateTripSettings(token, body);
   if ("error" in result) return c.json(result, errStatus(result.error));
   return c.json(result);
 });

@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { TripType } from "../../shared/types";
 import { createTrip } from "../lib/api";
 import { useI18n } from "../lib/i18n";
 import LanguageToggle from "../components/LanguageToggle";
@@ -10,6 +11,7 @@ export default function HomePage() {
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [tripType, setTripType] = useState<TripType>("friends");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -18,7 +20,7 @@ export default function HomePage() {
     setError(null);
     setBusy(true);
     try {
-      const { tripId, token } = await createTrip({ title, startDate, endDate });
+      const { tripId, token } = await createTrip({ title, startDate, endDate, tripType });
       navigate(`/t/${tripId}?k=${token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -70,6 +72,25 @@ export default function HomePage() {
                 required
               />
             </label>
+          </div>
+          <div className="text-sm text-ink-soft">
+            {t("home.tripType")}
+            <div className="mt-1 flex rounded-full border border-ink/15 p-0.5">
+              <button
+                type="button"
+                onClick={() => setTripType("friends")}
+                className={`flex-1 rounded-full px-3 py-1.5 text-sm ${tripType === "friends" ? "bg-ink text-cream" : "text-ink/60"}`}
+              >
+                {t("home.tripTypeFriends")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTripType("family")}
+                className={`flex-1 rounded-full px-3 py-1.5 text-sm ${tripType === "family" ? "bg-ink text-cream" : "text-ink/60"}`}
+              >
+                {t("home.tripTypeFamily")}
+              </button>
+            </div>
           </div>
           {error && <p className="text-sm text-red-700">{error}</p>}
           <button

@@ -19,6 +19,7 @@ interface TripStore {
     personalPacking: PersonalPackingItem[],
   ) => void;
   setPresence: (members: Member[]) => void;
+  setVotingEnabled: (votingEnabled: boolean) => void;
   /** Server broadcast / reconnect snapshot. Ignores out-of-order deliveries older than what we already have. */
   setPlaces: (places: Place[], version?: number) => void;
   /** Optimistic local update from a REST response, applied before the WS broadcast round-trip arrives. */
@@ -48,6 +49,8 @@ export const useTripStore = create<TripStore>((set) => ({
   setTripState: (trip, members, places, groupPacking, personalPacking) =>
     set({ trip, members, places, groupPacking, personalPacking }),
   setPresence: (members) => set({ members }),
+  setVotingEnabled: (votingEnabled) =>
+    set((state) => (state.trip ? { trip: { ...state.trip, votingEnabled } } : state)),
   setPlaces: (places, version) =>
     set((state) =>
       version !== undefined && version < state.placesVersion

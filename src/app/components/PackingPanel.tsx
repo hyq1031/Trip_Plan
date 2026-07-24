@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import type { GroupPackingItem, Member, PersonalPackingItem } from "../../shared/types";
+import { AGE_GROUP_EMOJI } from "../../shared/packingTemplate";
 import { useI18n } from "../lib/i18n";
 
 function GroupRow({
@@ -80,6 +81,8 @@ export default function PackingPanel({
   const { t } = useI18n();
   const [newItem, setNewItem] = useState("");
   const myItems = personalPacking.filter((i) => i.memberId === memberId);
+  const me = members.find((m) => m.id === memberId);
+  const myAgeBadge = me ? AGE_GROUP_EMOJI[me.ageGroup] : "";
 
   function handleAdd(e: FormEvent) {
     e.preventDefault();
@@ -123,7 +126,10 @@ export default function PackingPanel({
       </section>
 
       <section>
-        <h2 className="mb-2 font-serif text-lg text-ink">{t("packing.yourChecklist")}</h2>
+        <h2 className="mb-2 font-serif text-lg text-ink">
+          {myAgeBadge ? `${myAgeBadge} ` : ""}
+          {t("packing.yourChecklist")}
+        </h2>
         <ul className="space-y-2">
           {myItems.map((item) => (
             <li

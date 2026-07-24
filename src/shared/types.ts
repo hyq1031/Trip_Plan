@@ -1,10 +1,17 @@
+export type TripType = "friends" | "family";
+
 export interface Trip {
   id: string;
   title: string;
   startDate: string;
   endDate: string;
   version: number;
+  tripType: TripType;
+  /** When false, undecided/voting UI is hidden and new places default straight to "planned". */
+  votingEnabled: boolean;
 }
+
+export type AgeGroup = "adult" | "teen" | "child" | "infant";
 
 export interface Member {
   id: string;
@@ -14,6 +21,9 @@ export interface Member {
   online: boolean;
   /** Place the member has marked themselves "at" during day-of mode, or null. */
   currentPlaceId: string | null;
+  ageGroup: AgeGroup;
+  /** Free-text medical/allergy/emergency-contact note, visible to the whole group. */
+  notes: string;
 }
 
 export type PlaceStatus = "idea" | "undecided" | "planned" | "booked";
@@ -85,4 +95,5 @@ export interface TripState {
 export type ServerEvent =
   | { type: "presence"; members: Member[] }
   | { type: "places"; places: Place[]; version: number }
-  | { type: "packing"; groupPacking: GroupPackingItem[]; personalPacking: PersonalPackingItem[] };
+  | { type: "packing"; groupPacking: GroupPackingItem[]; personalPacking: PersonalPackingItem[] }
+  | { type: "trip"; votingEnabled: boolean };

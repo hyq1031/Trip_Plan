@@ -157,6 +157,7 @@ function PlaceRow({
   membersHere,
   tripStartDate,
   tripEndDate,
+  votingEnabled,
   onSelect,
   onDelete,
   onVote,
@@ -171,6 +172,7 @@ function PlaceRow({
   membersHere: Member[];
   tripStartDate: string;
   tripEndDate: string;
+  votingEnabled: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onVote: (value: 1 | -1 | 0) => void;
@@ -230,8 +232,15 @@ function PlaceRow({
           ×
         </button>
       </div>
-      {place.status === "undecided" && (
+      {place.status === "undecided" && votingEnabled && (
         <VoteRow place={place} memberId={memberId} onVote={onVote} onPromote={onPromote} />
+      )}
+      {place.status === "undecided" && !votingEnabled && (
+        <div className="ml-9 pb-2 text-sm" onClick={(e) => e.stopPropagation()}>
+          <button type="button" onClick={onPromote} className="rounded-full bg-ink px-2 py-0.5 text-cream">
+            {t("timeline.markPlanned")}
+          </button>
+        </div>
       )}
       <PriceRow
         place={place}
@@ -251,6 +260,7 @@ export default function Timeline({
   members,
   tripStartDate,
   tripEndDate,
+  votingEnabled,
   onSelectPlace,
   onReorder,
   onDeletePlace,
@@ -265,6 +275,7 @@ export default function Timeline({
   members: Member[];
   tripStartDate: string;
   tripEndDate: string;
+  votingEnabled: boolean;
   onSelectPlace: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
   onDeletePlace: (id: string) => void;
@@ -306,6 +317,7 @@ export default function Timeline({
               membersHere={members.filter((m) => m.currentPlaceId === place.id && m.online)}
               tripStartDate={tripStartDate}
               tripEndDate={tripEndDate}
+              votingEnabled={votingEnabled}
               onSelect={() => onSelectPlace(place.id)}
               onDelete={() => onDeletePlace(place.id)}
               onVote={(value) => onVote(place.id, value)}

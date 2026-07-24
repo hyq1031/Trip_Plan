@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import type { AgeGroup } from "../../shared/types";
 import {
   addGroupItem,
   castVote,
@@ -15,6 +16,7 @@ import {
   togglePersonalItem,
   updateGroupItem,
   updatePlace,
+  updateTripSettings,
 } from "../lib/api";
 import { todayDayIndex } from "../lib/dayOf";
 import { tripDays } from "../lib/days";
@@ -63,6 +65,8 @@ export default function TripPage() {
   const [memberId, setMemberId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<ViewTab>("itinerary");
+  const [joinAgeGroup, setJoinAgeGroup] = useState<AgeGroup>("adult");
+  const [joinNotes, setJoinNotes] = useState("");
 
   useEffect(() => {
     reset();
@@ -117,8 +121,13 @@ export default function TripPage() {
     const name = String(form.get("name") ?? "").trim();
     if (!name) return;
     const local = saveLocalMember(tripId, name);
-    await joinTrip(tripId, token, local.memberId, name, lang);
+    await joinTrip(tripId, token, local.memberId, name, lang, joinAgeGroup, joinNotes.trim());
     setMemberId(local.memberId);
+  }
+
+  async function handleToggleVoting() {
+    if (!trip) return;
+    await updateTripSettings(tripId, token, { votingEnabled: !trip.votingEnabled });
   }
 
   async function handleAddPlace(result: GeocodeResult, upForVote: boolean) {
@@ -240,6 +249,29 @@ export default function TripPage() {
                 required
               />
             </label>
+            <label className="block text-sm text-ink-soft">
+              {t("join.ageGroup")}
+              <select
+                value={joinAgeGroup}
+                onChange={(e) => setJoinAgeGroup(e.target.value as AgeGroup)}
+                className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 outline-none focus:border-terracotta"
+              >
+                <option value="adult">{t("join.ageGroupAdult")}</option>
+                <option value="teen">{t("join.ageGroupTeen")}</option>
+                <option value="child">{t("join.ageGroupChild")}</option>
+                <option value="infant">{t("join.ageGroupInfant")}</option>
+              </select>
+            </label>
+            <label className="block text-sm text-ink-soft">
+              {t("join.medicalNotes")}
+              <textarea
+                value={joinNotes}
+                onChange={(e) => setJoinNotes(e.target.value)}
+                placeholder={t("join.medicalNotesPlaceholder")}
+                rows={2}
+                className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 outline-none focus:border-terracotta"
+              />
+            </label>
             <button type="submit" className="w-full rounded bg-ink py-2.5 font-medium text-cream">
               {t("join.joinButton")}
             </button>
@@ -276,6 +308,16 @@ export default function TripPage() {
               {t("header.packing")}
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleToggleVoting}
+            className={`rounded-full border px-3 py-1 text-sm ${
+              trip.votingEnabled ? "border-ink/20 text-ink/70 hover:bg-white" : "border-ink/20 bg-ink/5 text-ink/50"
+            }`}
+            title="Toggle whether new places go up for a group vote or straight to planned"
+          >
+            {trip.votingEnabled ? t("header.votingOn") : t("header.votingOff")}
+          </button>
           <button
             type="button"
             onClick={() => downloadOfflineHtml(trip, places, groupPacking, personalPacking, members, lang)}
@@ -323,6 +365,7 @@ export default function TripPage() {
               members={members}
               tripStartDate={trip.startDate}
               tripEndDate={trip.endDate}
+              votingEnabled={trip.votingEnabled}
               onSelectPlace={setSelectedPlaceId}
               onReorder={handleReorder}
               onDeletePlace={handleDeletePlace}
@@ -331,7 +374,7 @@ export default function TripPage() {
               onLookupPrice={handleLookupPrice}
               onUseTicketPrice={handleUseTicketPrice}
             />
-            <AddPlaceForm onAdd={handleAddPlace} />
+            <AddPlaceForm onAdd={handleAddPlace} votingEnabled={trip.votingEnabled} />
           </div>
         </>
       ) : (
