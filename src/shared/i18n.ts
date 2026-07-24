@@ -2,6 +2,8 @@ export interface Dictionary {
   "home.title": string;
   "home.tripTitleLabel": string;
   "home.tripTitlePlaceholder": string;
+  "home.destination": string;
+  "home.destinationPlaceholder": string;
   "home.start": string;
   "home.end": string;
   "home.tripType": string;
@@ -9,6 +11,7 @@ export interface Dictionary {
   "home.tripTypeFamily": string;
   "home.createButton": string;
   "home.creating": string;
+  "home.generating": string;
 
   "join.yourName": string;
   "join.namePlaceholder": string;
@@ -66,6 +69,10 @@ export interface Dictionary {
   "packing.addButton": string;
   "packing.claim": string;
 
+  "hotels.title": string;
+  "hotels.empty": string;
+  "hotels.search": string;
+
   "export.noPlacesPlanned": string;
   "export.noSharedItems": string;
   "export.checklistOf": string; // "{emoji} {name}'s checklist"
@@ -77,6 +84,8 @@ export const en: Dictionary = {
   "home.title": "Plan a trip",
   "home.tripTitleLabel": "Trip title",
   "home.tripTitlePlaceholder": "Tokyo with friends",
+  "home.destination": "Destination",
+  "home.destinationPlaceholder": "Osaka, Japan",
   "home.start": "Start",
   "home.end": "End",
   "home.tripType": "Trip type",
@@ -84,6 +93,7 @@ export const en: Dictionary = {
   "home.tripTypeFamily": "Family",
   "home.createButton": "Create trip",
   "home.creating": "Creating…",
+  "home.generating": "Finding great spots for your trip… (~30-45s)",
 
   "join.yourName": "Your name",
   "join.namePlaceholder": "Kevin",
@@ -141,6 +151,10 @@ export const en: Dictionary = {
   "packing.addButton": "Add",
   "packing.claim": "claim",
 
+  "hotels.title": "Suggested hotels",
+  "hotels.empty": "No hotel suggestions yet.",
+  "hotels.search": "search",
+
   "export.noPlacesPlanned": "No places planned.",
   "export.noSharedItems": "No shared items.",
   "export.checklistOf": "{emoji} {name}'s checklist",
@@ -152,6 +166,8 @@ export const zh: Dictionary = {
   "home.title": "规划一次旅行",
   "home.tripTitleLabel": "行程名称",
   "home.tripTitlePlaceholder": "和朋友一起去东京",
+  "home.destination": "目的地",
+  "home.destinationPlaceholder": "大阪，日本",
   "home.start": "开始日期",
   "home.end": "结束日期",
   "home.tripType": "行程类型",
@@ -159,6 +175,7 @@ export const zh: Dictionary = {
   "home.tripTypeFamily": "家庭",
   "home.createButton": "创建行程",
   "home.creating": "创建中…",
+  "home.generating": "正在为你寻找推荐地点…（约30-45秒）",
 
   "join.yourName": "你的名字",
   "join.namePlaceholder": "小凯",
@@ -215,6 +232,10 @@ export const zh: Dictionary = {
   "packing.addPlaceholder": "添加共用物品…",
   "packing.addButton": "添加",
   "packing.claim": "认领",
+
+  "hotels.title": "推荐酒店",
+  "hotels.empty": "暂无酒店推荐。",
+  "hotels.search": "搜索",
 
   "export.noPlacesPlanned": "还没有计划的地点。",
   "export.noSharedItems": "还没有共用物品。",

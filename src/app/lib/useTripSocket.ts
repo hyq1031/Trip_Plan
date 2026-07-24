@@ -8,6 +8,7 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
   const setPlaces = useTripStore((s) => s.setPlaces);
   const setPacking = useTripStore((s) => s.setPacking);
   const setVotingEnabled = useTripStore((s) => s.setVotingEnabled);
+  const setHotelSuggestions = useTripStore((s) => s.setHotelSuggestions);
   const setConnected = useTripStore((s) => s.setConnected);
   const retryDelay = useRef(1000);
 
@@ -31,6 +32,7 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
         if (data.type === "places") setPlaces(data.places, data.version);
         if (data.type === "packing") setPacking(data.groupPacking, data.personalPacking);
         if (data.type === "trip") setVotingEnabled(data.votingEnabled);
+        if (data.type === "hotels") setHotelSuggestions(data.hotelSuggestions);
       };
 
       ws.onclose = () => {
@@ -48,5 +50,15 @@ export function useTripSocket(tripId: string, token: string, memberId: string | 
       clearTimeout(retryTimer);
       ws?.close();
     };
-  }, [tripId, token, memberId, setPresence, setPlaces, setPacking, setVotingEnabled, setConnected]);
+  }, [
+    tripId,
+    token,
+    memberId,
+    setPresence,
+    setPlaces,
+    setPacking,
+    setVotingEnabled,
+    setHotelSuggestions,
+    setConnected,
+  ]);
 }

@@ -24,6 +24,7 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 app.post("/api/trips", async (c) => {
   const body = await c.req.json<{
     title: string;
+    destination?: string;
     startDate: string;
     endDate: string;
     tripType?: TripType;
@@ -37,12 +38,21 @@ app.post("/api/trips", async (c) => {
   await stub.createTrip({
     id: tripId,
     title: body.title,
+    destination: body.destination ?? "",
     startDate: body.startDate,
     endDate: body.endDate,
     token,
     tripType: body.tripType,
   });
   return c.json({ tripId, token });
+});
+
+app.post("/api/trip/:id/generate", async (c) => {
+  const token = c.req.query("k") ?? "";
+  const stub = stubFor(c.env, c.req.param("id"));
+  const result = await stub.generateItinerary(token);
+  if ("error" in result) return c.json(result, errStatus(result.error));
+  return c.json(result);
 });
 
 app.get("/api/trip/:id/state", async (c) => {

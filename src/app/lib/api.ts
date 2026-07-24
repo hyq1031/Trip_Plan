@@ -1,6 +1,7 @@
 import type {
   AgeGroup,
   GroupPackingItem,
+  HotelSuggestion,
   Member,
   NewPlaceInput,
   PersonalPackingItem,
@@ -19,6 +20,7 @@ async function parseJson<T>(res: Response): Promise<T> {
 
 export async function createTrip(input: {
   title: string;
+  destination?: string;
   startDate: string;
   endDate: string;
   tripType?: TripType;
@@ -27,6 +29,22 @@ export async function createTrip(input: {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
+  });
+  return parseJson(res);
+}
+
+/**
+ * Triggers AI-generated place + hotel suggestions for the trip's destination
+ * (OpenRouter deepseek-v4-flash + web search, geocoded via Nominatim). Takes
+ * ~10-20s since each suggested place is geocoded sequentially. Best-effort —
+ * callers should let trip creation proceed even if this fails or times out.
+ */
+export async function generateItinerary(
+  tripId: string,
+  token: string,
+): Promise<{ places: Place[]; hotelSuggestions: HotelSuggestion[] }> {
+  const res = await fetch(`/api/trip/${tripId}/generate?k=${encodeURIComponent(token)}`, {
+    method: "POST",
   });
   return parseJson(res);
 }

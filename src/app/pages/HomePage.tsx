@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { TripType } from "../../shared/types";
-import { createTrip } from "../lib/api";
+import { createTrip, generateItinerary } from "../lib/api";
 import { useI18n } from "../lib/i18n";
 import LanguageToggle from "../components/LanguageToggle";
 
@@ -9,25 +9,35 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [title, setTitle] = useState("");
+  const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [tripType, setTripType] = useState<TripType>("friends");
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "creating" | "generating">("idle");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setBusy(true);
+    setPhase("creating");
     try {
-      const { tripId, token } = await createTrip({ title, startDate, endDate, tripType });
+      const { tripId, token } = await createTrip({ title, destination, startDate, endDate, tripType });
+      setPhase("generating");
+      // Best-effort: a missing/misbehaving OPENROUTER_API_KEY shouldn't block
+      // trip creation — the trip page works fine with zero AI-suggested places.
+      try {
+        await generateItinerary(tripId, token);
+      } catch (genErr) {
+        console.warn("Itinerary generation failed, continuing with an empty trip:", genErr);
+      }
       navigate(`/t/${tripId}?k=${token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setBusy(false);
+      setPhase("idle");
     }
   }
+
+  const busy = phase !== "idle";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cream p-6">
@@ -48,6 +58,16 @@ export default function HomePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("home.tripTitlePlaceholder")}
+              required
+            />
+          </label>
+          <label className="block text-sm text-ink-soft">
+            {t("home.destination")}
+            <input
+              className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 text-ink outline-none focus:border-terracotta"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              placeholder={t("home.destinationPlaceholder")}
               required
             />
           </label>
@@ -98,7 +118,7 @@ export default function HomePage() {
             disabled={busy}
             className="w-full rounded bg-ink py-2.5 font-medium text-cream transition-opacity disabled:opacity-50"
           >
-            {busy ? t("home.creating") : t("home.createButton")}
+            {phase === "generating" ? t("home.generating") : phase === "creating" ? t("home.creating") : t("home.createButton")}
           </button>
         </form>
       </div>

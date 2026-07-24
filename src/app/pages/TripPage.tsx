@@ -28,6 +28,7 @@ import { useTripStore } from "../store/tripStore";
 import AddPlaceForm from "../components/AddPlaceForm";
 import DayOfBanner from "../components/DayOfBanner";
 import DayTabs from "../components/DayTabs";
+import HotelSuggestions from "../components/HotelSuggestions";
 import LanguageToggle from "../components/LanguageToggle";
 import MapView from "../components/MapView";
 import PackingPanel from "../components/PackingPanel";
@@ -48,6 +49,7 @@ export default function TripPage() {
     places,
     groupPacking,
     personalPacking,
+    hotelSuggestions,
     connected,
     selectedDay,
     selectedPlaceId,
@@ -73,7 +75,14 @@ export default function TripPage() {
     setLoadError(null);
     fetchTripState(tripId, token)
       .then((state) => {
-        setTripState(state.trip, state.members, state.places, state.groupPacking, state.personalPacking);
+        setTripState(
+          state.trip,
+          state.members,
+          state.places,
+          state.groupPacking,
+          state.personalPacking,
+          state.hotelSuggestions,
+        );
         const todayIdx = todayDayIndex(tripDays(state.trip.startDate, state.trip.endDate));
         if (todayIdx !== null) setSelectedDay(todayIdx);
       })
@@ -348,6 +357,12 @@ export default function TripPage() {
             <span>{t("totals.dayTotal")}: ¥{dayTotal.toLocaleString()}</span>
             <span>{t("totals.tripTotal")}: ¥{tripTotal.toLocaleString()}</span>
           </div>
+
+          <HotelSuggestions
+            suggestions={hotelSuggestions}
+            tripStartDate={trip.startDate}
+            tripEndDate={trip.endDate}
+          />
 
           <div className="h-[42vh] shrink-0 border-b border-rule">
             <MapView

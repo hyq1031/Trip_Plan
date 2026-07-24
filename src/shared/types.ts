@@ -3,6 +3,7 @@ export type TripType = "friends" | "family";
 export interface Trip {
   id: string;
   title: string;
+  destination: string;
   startDate: string;
   endDate: string;
   version: number;
@@ -84,16 +85,26 @@ export interface TicketPriceResult {
   cached: boolean;
 }
 
+/** AI-suggested hotel, name/area/reasoning only — no live rates (no booking API integrated). */
+export interface HotelSuggestion {
+  name: string;
+  area: string;
+  priceTier: string;
+  note: string;
+}
+
 export interface TripState {
   trip: Trip;
   members: Member[];
   places: Place[];
   groupPacking: GroupPackingItem[];
   personalPacking: PersonalPackingItem[];
+  hotelSuggestions: HotelSuggestion[];
 }
 
 export type ServerEvent =
   | { type: "presence"; members: Member[] }
   | { type: "places"; places: Place[]; version: number }
   | { type: "packing"; groupPacking: GroupPackingItem[]; personalPacking: PersonalPackingItem[] }
-  | { type: "trip"; votingEnabled: boolean };
+  | { type: "trip"; votingEnabled: boolean }
+  | { type: "hotels"; hotelSuggestions: HotelSuggestion[] };

@@ -4,6 +4,7 @@ import type { Env } from "./env";
 import type {
   AgeGroup,
   GroupPackingItem,
+  HotelSuggestion,
   Member,
   NewPlaceInput,
   PersonalPackingItem,
@@ -21,12 +22,14 @@ import { PACKING_TEMPLATES } from "../shared/packingTemplate";
 type TripRow = Record<string, SqlStorageValue> & {
   id: string;
   title: string;
+  destination: string;
   start_date: string;
   end_date: string;
   token: string;
   version: number;
   trip_type: string;
   voting_enabled: number;
+  hotel_suggestions: string;
 };
 
 type MemberRow = Record<string, SqlStorageValue> & {
@@ -79,6 +82,11 @@ type TicketCacheRow = Record<string, SqlStorageValue> & {
 };
 
 const TICKET_CACHE_HOURS = 12;
+const NOMINATIM_HEADERS = { "User-Agent": "FriendTrip/1.0 (friend-trip planner; contact: n/a)" };
+// Nominatim's usage policy asks for max ~1 request/sec from a single client.
+const GEOCODE_DELAY_MS = 1100;
+const MAX_GENERATED_PLACES = 12;
+const MAX_GENERATED_HOTELS = 3;
 
 interface WsAttachment {
   memberId: string;
@@ -130,12 +138,14 @@ export class TripRoom extends DurableObject<Env> {
       CREATE TABLE IF NOT EXISTS trip (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
+        destination TEXT NOT NULL DEFAULT '',
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL,
         token TEXT NOT NULL,
         version INTEGER NOT NULL DEFAULT 0,
         trip_type TEXT NOT NULL DEFAULT 'friends',
-        voting_enabled INTEGER NOT NULL DEFAULT 1
+        voting_enabled INTEGER NOT NULL DEFAULT 1,
+        hotel_suggestions TEXT NOT NULL DEFAULT '[]'
       )
     `);
     this.sql.exec(`
@@ -307,11 +317,32 @@ export class TripRoom extends DurableObject<Env> {
     }
   }
 
+  private hotelSuggestionsFromRow(row: TripRow | null): HotelSuggestion[] {
+    if (!row) return [];
+    try {
+      return JSON.parse(row.hotel_suggestions) as HotelSuggestion[];
+    } catch {
+      return [];
+    }
+  }
+
+  private hotelsEvent(): ServerEvent {
+    return { type: "hotels", hotelSuggestions: this.hotelSuggestionsFromRow(this.getTripRow()) };
+  }
+
+  private broadcastHotels() {
+    const payload = JSON.stringify(this.hotelsEvent());
+    for (const ws of this.ctx.getWebSockets()) {
+      ws.send(payload);
+    }
+  }
+
   // --- RPC methods (called directly on the stub from the Worker) ---
 
   async createTrip(input: {
     id: string;
     title: string;
+    destination: string;
     startDate: string;
     endDate: string;
     token: string;
@@ -321,10 +352,11 @@ export class TripRoom extends DurableObject<Env> {
     // Family trips default to a top-down (no-voting) mode; friend trips default to voting on.
     const votingEnabled = tripType === "friends";
     this.sql.exec(
-      `INSERT OR IGNORE INTO trip (id, title, start_date, end_date, token, version, trip_type, voting_enabled)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
+      `INSERT OR IGNORE INTO trip (id, title, destination, start_date, end_date, token, version, trip_type, voting_enabled)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
       input.id,
       input.title,
+      input.destination,
       input.startDate,
       input.endDate,
       input.token,
@@ -339,6 +371,7 @@ export class TripRoom extends DurableObject<Env> {
     const trip: Trip = {
       id: row.id,
       title: row.title,
+      destination: row.destination,
       startDate: row.start_date,
       endDate: row.end_date,
       version: row.version,
@@ -351,6 +384,7 @@ export class TripRoom extends DurableObject<Env> {
       places: this.listPlacesInternal(),
       groupPacking: this.listGroupPackingInternal(),
       personalPacking: this.listPersonalPackingInternal(),
+      hotelSuggestions: this.hotelSuggestionsFromRow(row),
     };
   }
 
@@ -549,6 +583,168 @@ export class TripRoom extends DurableObject<Env> {
     return placeFromRow(updated);
   }
 
+  // --- AI itinerary generation (OpenRouter: deepseek/deepseek-v4-flash + web plugin) ---
+
+  private async geocode(query: string): Promise<{ lat: number; lng: number } | null> {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: NOMINATIM_HEADERS });
+    if (!res.ok) return null;
+    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+    const first = data[0];
+    if (!first) return null;
+    return { lat: Number.parseFloat(first.lat), lng: Number.parseFloat(first.lon) };
+  }
+
+  async generateItinerary(
+    token: string,
+  ): Promise<{ places: Place[]; hotelSuggestions: HotelSuggestion[] } | { error: string }> {
+    if (!this.checkToken(token)) return { error: "forbidden" };
+    const row = this.getTripRow();
+    if (!row) return { error: "not_found" };
+    if (!row.destination.trim()) return { error: "trip has no destination set" };
+    if (!this.env.OPENROUTER_API_KEY) {
+      return { error: "OPENROUTER_API_KEY is not configured (wrangler secret put OPENROUTER_API_KEY)" };
+    }
+
+    const start = new Date(`${row.start_date}T00:00:00Z`);
+    const end = new Date(`${row.end_date}T00:00:00Z`);
+    const dayCount = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+    const placesToRequest = Math.min(dayCount * 2, MAX_GENERATED_PLACES);
+
+    const suggestions = await this.callOpenRouterForItinerary(
+      row.destination,
+      dayCount,
+      placesToRequest,
+      row.trip_type as TripType,
+    );
+
+    const places: Place[] = [];
+    const nextSortOrder = new Map<number, number>();
+    for (const suggestion of suggestions.places) {
+      const geo = await this.geocode(`${suggestion.name}, ${row.destination}`);
+      if (!geo) continue; // skip anything Nominatim can't confidently resolve rather than guess coordinates
+      await new Promise((resolve) => setTimeout(resolve, GEOCODE_DELAY_MS));
+
+      const dayIndex = Math.min(Math.max(0, suggestion.dayIndex), dayCount - 1);
+      const sortOrder = nextSortOrder.get(dayIndex) ?? 0;
+      nextSortOrder.set(dayIndex, sortOrder + 1);
+
+      const id = nanoid(10);
+      this.sql.exec(
+        `INSERT INTO places (id, day_index, sort_order, name, lat, lng, est_cost, category, notes, status, votes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'planned', '{}')`,
+        id,
+        dayIndex,
+        sortOrder,
+        suggestion.name,
+        geo.lat,
+        geo.lng,
+        suggestion.estCost,
+        suggestion.category || "📍",
+        suggestion.notes ?? "",
+      );
+      const placeRow = this.sql.exec<PlaceRow>("SELECT * FROM places WHERE id = ?", id).toArray()[0];
+      places.push(placeFromRow(placeRow));
+    }
+
+    this.sql.exec(
+      "UPDATE trip SET hotel_suggestions = ? WHERE id = ?",
+      JSON.stringify(suggestions.hotels),
+      row.id,
+    );
+
+    if (places.length > 0) {
+      this.bumpVersion();
+      this.broadcastPlaces();
+    }
+    this.broadcastHotels();
+
+    return { places, hotelSuggestions: suggestions.hotels };
+  }
+
+  private async callOpenRouterForItinerary(
+    destination: string,
+    dayCount: number,
+    placesToRequest: number,
+    tripType: TripType,
+  ): Promise<{
+    places: Array<{ name: string; dayIndex: number; category: string; notes: string; estCost: number | null }>;
+    hotels: HotelSuggestion[];
+  }> {
+    const groupDescription = tripType === "family" ? "a family with a child" : "a group of friends";
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${this.env.OPENROUTER_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-v4-flash",
+        plugins: [{ id: "web", engine: "parallel", max_results: 6 }],
+        temperature: 0.3,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a travel expert who recommends real, specific, well-known points of interest and " +
+              "good-value hotels for a destination. Respond with ONLY a raw JSON object — no markdown fences, no prose.",
+          },
+          {
+            role: "user",
+            content:
+              `Destination: ${destination}. Trip length: ${dayCount} day(s). Travelers: ${groupDescription}. ` +
+              `Recommend up to ${placesToRequest} real, specific points of interest (a mix of famous landmarks and ` +
+              `interesting lesser-known spots) suited to this destination and these travelers, distributed across ` +
+              `the ${dayCount} day(s) (0-indexed) in a sensible geographic/logical order, roughly grouping nearby ` +
+              `sights on the same day. Also recommend up to ${MAX_GENERATED_HOTELS} specific real hotels known for ` +
+              `good price/value (not luxury, not the cheapest hostel) in or near ${destination}, each with a one-line reason. ` +
+              `Respond with exactly this JSON shape: ` +
+              `{"places": [{"name": "<specific, searchable place name>", "dayIndex": <0-based integer>, ` +
+              `"category": "<single emoji>", "notes": "<short 1-sentence description>", ` +
+              `"estCost": <number or null, local currency>}], ` +
+              `"hotels": [{"name": "<specific hotel name>", "area": "<neighborhood/area>", ` +
+              `"priceTier": "<e.g. budget, mid-range>", "note": "<short reason it's good value>"}]}`,
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`OpenRouter request failed (${res.status}): ${await res.text()}`);
+    }
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = data.choices?.[0]?.message?.content ?? "";
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+
+    try {
+      const parsed = JSON.parse(cleaned) as {
+        places?: Array<{ name?: string; dayIndex?: number; category?: string; notes?: string; estCost?: number | null }>;
+        hotels?: Array<{ name?: string; area?: string; priceTier?: string; note?: string }>;
+      };
+      return {
+        places: (parsed.places ?? [])
+          .filter((p) => p.name)
+          .map((p) => ({
+            name: p.name!,
+            dayIndex: typeof p.dayIndex === "number" ? p.dayIndex : 0,
+            category: p.category ?? "📍",
+            notes: p.notes ?? "",
+            estCost: typeof p.estCost === "number" ? p.estCost : null,
+          })),
+        hotels: (parsed.hotels ?? [])
+          .filter((h) => h.name)
+          .map((h) => ({
+            name: h.name!,
+            area: h.area ?? "",
+            priceTier: h.priceTier ?? "",
+            note: h.note ?? "",
+          })),
+      };
+    } catch {
+      return { places: [], hotels: [] };
+    }
+  }
+
   // --- Ticket price lookup (OpenRouter: deepseek/deepseek-v4-flash + web plugin) ---
 
   async getTicketPrice(
@@ -735,6 +931,7 @@ export class TripRoom extends DurableObject<Env> {
     server.send(JSON.stringify(this.packingEvent()));
     const row = this.getTripRow();
     server.send(JSON.stringify({ type: "trip", votingEnabled: row?.voting_enabled === 1 } satisfies ServerEvent));
+    server.send(JSON.stringify(this.hotelsEvent()));
     this.broadcastPresence();
     return new Response(null, { status: 101, webSocket: client });
   }
