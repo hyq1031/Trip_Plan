@@ -1,0 +1,31 @@
+/* Self-hosted (npm-bundled, no CDN) — only the weights we actually use, to keep the bundle lean. */
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/600-italic.css";
+
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #faf6ef;
+  --color-cream-dim: #f2ecdf;
+  --color-ink: #2a2621;
+  --color-ink-soft: #6b6459;
+  --color-rule: #d8d2c4;
+  --color-terracotta: #c65d3b;
+  /*
+   * CJK serif intentionally uses the system's own installed serif rather
+   * than bundling @fontsource/noto-serif-sc — that family is tens of MB of
+   * glyph coverage, a poor tradeoff for a hobby-scale app when every target
+   * OS (Windows/macOS/iOS/Android) already ships a solid CJK serif.
+   */
+  --font-serif: "Fraunces", "Noto Serif SC", "Songti SC", ui-serif, Georgia, serif;
+}
+
+body {
+  margin: 0;
+}
+
+.hairline {
+  border-color: var(--color-rule);
+}

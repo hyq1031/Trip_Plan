@@ -1,0 +1,186 @@
+export interface Dictionary {
+  "home.title": string;
+  "home.tripTitleLabel": string;
+  "home.tripTitlePlaceholder": string;
+  "home.start": string;
+  "home.end": string;
+  "home.createButton": string;
+  "home.creating": string;
+
+  "join.yourName": string;
+  "join.namePlaceholder": string;
+  "join.joinButton": string;
+
+  "trip.notFound": string;
+  "trip.loading": string;
+
+  "header.itinerary": string;
+  "header.packing": string;
+  "header.export": string;
+
+  "day.label": string; // "Day {n}"
+
+  "dayof.today": string;
+  "dayof.next": string;
+  "dayof.noStops": string;
+  "dayof.imHere": string;
+  "dayof.imHereChecked": string;
+  "dayof.hereNow": string;
+
+  "totals.dayTotal": string;
+  "totals.tripTotal": string;
+
+  "timeline.noPlaces": string;
+  "timeline.upForVote": string;
+  "timeline.promote": string;
+  "timeline.findHotels": string;
+  "timeline.checkPrice": string;
+  "timeline.checking": string;
+  "timeline.noPriceFound": string;
+  "timeline.source": string;
+  "timeline.usePrice": string;
+  "timeline.cached": string;
+  "timeline.hereNow": string;
+
+  "addPlace.searchPlaceholder": string;
+  "addPlace.upForVoteLabel": string;
+  "addPlace.searching": string;
+
+  "packing.groupGear": string;
+  "packing.yourChecklist": string;
+  "packing.noGear": string;
+  "packing.addPlaceholder": string;
+  "packing.addButton": string;
+  "packing.claim": string;
+
+  "export.noPlacesPlanned": string;
+  "export.noSharedItems": string;
+  "export.checklistOf": string; // "{emoji} {name}'s checklist"
+  "export.footer": string;
+}
+
+export const en: Dictionary = {
+  "home.title": "Plan a trip",
+  "home.tripTitleLabel": "Trip title",
+  "home.tripTitlePlaceholder": "Tokyo with friends",
+  "home.start": "Start",
+  "home.end": "End",
+  "home.createButton": "Create trip",
+  "home.creating": "Creating…",
+
+  "join.yourName": "Your name",
+  "join.namePlaceholder": "Kevin",
+  "join.joinButton": "Join trip",
+
+  "trip.notFound": "Couldn't open this trip — the link may be wrong or expired.",
+  "trip.loading": "Loading…",
+
+  "header.itinerary": "Itinerary",
+  "header.packing": "Packing",
+  "header.export": "Export",
+
+  "day.label": "Day {n}",
+
+  "dayof.today": "TODAY",
+  "dayof.next": "Next",
+  "dayof.noStops": "No planned stops for today yet.",
+  "dayof.imHere": "I'm here",
+  "dayof.imHereChecked": "✓ I'm here",
+  "dayof.hereNow": "here now",
+
+  "totals.dayTotal": "Day total",
+  "totals.tripTotal": "Trip total",
+
+  "timeline.noPlaces": "No places yet — add your first stop below.",
+  "timeline.upForVote": "up for vote",
+  "timeline.promote": "promote to plan",
+  "timeline.findHotels": "find hotels",
+  "timeline.checkPrice": "check ticket price",
+  "timeline.checking": "checking…",
+  "timeline.noPriceFound": "no price found",
+  "timeline.source": "source",
+  "timeline.usePrice": "use this price",
+  "timeline.cached": "cached",
+  "timeline.hereNow": "here",
+
+  "addPlace.searchPlaceholder": "Search a place to add…",
+  "addPlace.upForVoteLabel": "🗳️ Add as \"up for vote\" instead of planned",
+  "addPlace.searching": "Searching…",
+
+  "packing.groupGear": "Group gear",
+  "packing.yourChecklist": "Your checklist",
+  "packing.noGear": "No shared gear yet — add the first-aid kit, speaker…",
+  "packing.addPlaceholder": "Add group item…",
+  "packing.addButton": "Add",
+  "packing.claim": "claim",
+
+  "export.noPlacesPlanned": "No places planned.",
+  "export.noSharedItems": "No shared items.",
+  "export.checklistOf": "{emoji} {name}'s checklist",
+  "export.footer": "Exported from Friend Trip · works fully offline · nav links open your phone's map app when you have signal",
+};
+
+export const zh: Dictionary = {
+  "home.title": "规划一次旅行",
+  "home.tripTitleLabel": "行程名称",
+  "home.tripTitlePlaceholder": "和朋友一起去东京",
+  "home.start": "开始日期",
+  "home.end": "结束日期",
+  "home.createButton": "创建行程",
+  "home.creating": "创建中…",
+
+  "join.yourName": "你的名字",
+  "join.namePlaceholder": "小凯",
+  "join.joinButton": "加入行程",
+
+  "trip.notFound": "无法打开此行程 —— 链接可能有误或已过期。",
+  "trip.loading": "加载中…",
+
+  "header.itinerary": "行程",
+  "header.packing": "打包清单",
+  "header.export": "导出",
+
+  "day.label": "第{n}天",
+
+  "dayof.today": "今天",
+  "dayof.next": "下一站",
+  "dayof.noStops": "今天还没有计划的行程。",
+  "dayof.imHere": "我在这里",
+  "dayof.imHereChecked": "✓ 我在这里",
+  "dayof.hereNow": "在这里",
+
+  "totals.dayTotal": "当天花费",
+  "totals.tripTotal": "行程总花费",
+
+  "timeline.noPlaces": "还没有地点 —— 在下方添加第一站吧。",
+  "timeline.upForVote": "待投票",
+  "timeline.promote": "确定加入行程",
+  "timeline.findHotels": "查找酒店",
+  "timeline.checkPrice": "查询门票价格",
+  "timeline.checking": "查询中…",
+  "timeline.noPriceFound": "未找到价格",
+  "timeline.source": "来源",
+  "timeline.usePrice": "使用此价格",
+  "timeline.cached": "缓存结果",
+  "timeline.hereNow": "在这里",
+
+  "addPlace.searchPlaceholder": "搜索要添加的地点…",
+  "addPlace.upForVoteLabel": "🗳️ 添加为「待投票」而非已计划",
+  "addPlace.searching": "搜索中…",
+
+  "packing.groupGear": "共用装备",
+  "packing.yourChecklist": "我的清单",
+  "packing.noGear": "还没有共用装备 —— 添加急救包、蓝牙音箱…",
+  "packing.addPlaceholder": "添加共用物品…",
+  "packing.addButton": "添加",
+  "packing.claim": "认领",
+
+  "export.noPlacesPlanned": "还没有计划的地点。",
+  "export.noSharedItems": "还没有共用物品。",
+  "export.checklistOf": "{emoji} {name} 的清单",
+  "export.footer": "由 Friend Trip 导出 · 完全离线可用 · 导航链接需要有网络信号时打开手机地图应用",
+};
+
+export type Lang = "en" | "zh";
+
+export const dictionaries: Record<Lang, Dictionary> = { en, zh };

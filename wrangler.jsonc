@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "friend-trip",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TRIP_ROOM",
+        "class_name": "TripRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TripRoom"]
+    }
+  ]
+}
