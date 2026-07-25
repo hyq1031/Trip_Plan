@@ -356,38 +356,38 @@ export default function TripPage() {
             onSelect={setSelectedDay}
           />
 
-          {todayIdx !== null && selectedDay === todayIdx && (
-            <DayOfBanner
-              dayIndex={todayIdx}
-              dayPlaces={dayPlaces}
-              members={members}
-              memberId={memberId}
-              onSetCurrentPlace={handleSetCurrentPlace}
-            />
-          )}
-
-          <div className="flex items-center justify-between px-4 py-1 text-xs text-ink-soft">
-            <span>{t("totals.dayTotal")}: ¥{dayTotal.toLocaleString()}</span>
-            <span>{t("totals.tripTotal")}: ¥{tripTotal.toLocaleString()}</span>
-          </div>
-
-          <HotelSuggestions
-            suggestions={hotelSuggestions}
-            tripStartDate={trip.startDate}
-            tripEndDate={trip.endDate}
-          />
-          <MoneyTips tips={moneyTips} />
-          <DayRestaurant suggestion={dayRestaurant} />
-
-          <div className="h-[42vh] shrink-0 border-b border-rule">
-            <MapView
-              places={dayPlaces}
-              selectedPlaceId={selectedPlaceId}
-              onSelectPlace={setSelectedPlaceId}
-            />
-          </div>
-
           <div className="flex-1 overflow-y-auto">
+            {todayIdx !== null && selectedDay === todayIdx && (
+              <DayOfBanner
+                dayIndex={todayIdx}
+                dayPlaces={dayPlaces}
+                members={members}
+                memberId={memberId}
+                onSetCurrentPlace={handleSetCurrentPlace}
+              />
+            )}
+
+            <div className="flex items-center justify-between px-4 py-1 text-xs text-ink-soft">
+              <span>{t("totals.dayTotal")}: ¥{dayTotal.toLocaleString()}</span>
+              <span>{t("totals.tripTotal")}: ¥{tripTotal.toLocaleString()}</span>
+            </div>
+
+            <HotelSuggestions
+              suggestions={hotelSuggestions}
+              tripStartDate={trip.startDate}
+              tripEndDate={trip.endDate}
+            />
+            <MoneyTips tips={moneyTips} />
+            <DayRestaurant suggestion={dayRestaurant} />
+
+            <div className="h-[42vh] shrink-0 border-b border-rule">
+              <MapView
+                places={dayPlaces}
+                selectedPlaceId={selectedPlaceId}
+                onSelectPlace={setSelectedPlaceId}
+              />
+            </div>
+
             <Timeline
               places={dayPlaces}
               selectedPlaceId={selectedPlaceId}

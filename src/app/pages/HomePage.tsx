@@ -4,6 +4,7 @@ import type { TripType } from "../../shared/types";
 import { createTrip, generateItinerary } from "../lib/api";
 import { tripDays } from "../lib/days";
 import { useI18n } from "../lib/i18n";
+import DestinationField from "../components/DestinationField";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function HomePage() {
@@ -77,16 +78,7 @@ export default function HomePage() {
               required
             />
           </label>
-          <label className="block text-sm text-ink-soft">
-            {t("home.destination")}
-            <input
-              className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 text-ink outline-none focus:border-terracotta"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder={t("home.destinationPlaceholder")}
-              required
-            />
-          </label>
+          <DestinationField value={destination} onChange={setDestination} />
           <div className="flex gap-3">
             <label className="block flex-1 text-sm text-ink-soft">
               {t("home.start")}

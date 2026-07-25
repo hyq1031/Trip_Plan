@@ -166,6 +166,13 @@ export async function geocode(query: string): Promise<GeocodeResult[]> {
   return body.results;
 }
 
+/** City/region autocomplete for the destination field — see /api/destination-search for why this is a separate endpoint from geocode(). */
+export async function searchDestinations(query: string): Promise<GeocodeResult[]> {
+  const res = await fetch(`/api/destination-search?q=${encodeURIComponent(query)}`);
+  const body = await parseJson<{ results: GeocodeResult[] }>(res);
+  return body.results;
+}
+
 export async function castVote(
   tripId: string,
   token: string,

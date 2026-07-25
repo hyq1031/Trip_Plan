@@ -283,4 +283,50 @@ app.get("/api/geocode", async (c) => {
   return response;
 });
 
+interface PhotonFeature {
+  properties: {
+    name?: string;
+    state?: string;
+    country?: string;
+  };
+  geometry: { coordinates: [number, number] }; // [lng, lat]
+}
+
+/**
+ * Destination picker autocomplete. Nominatim's /search does fuzzy full-text
+ * matching, not prefix matching, so partial words like "Sydn" don't resolve —
+ * verified live. Photon (same OSM data, komoot-hosted, free, no key) is built
+ * for prefix/type-ahead search instead, and osm_tag=place restricts results
+ * to cities/regions/countries rather than individual POIs.
+ */
+app.get("/api/destination-search", async (c) => {
+  const q = c.req.query("q")?.trim();
+  if (!q || q.length < 2) return c.json({ results: [] });
+
+  const cache = caches.default;
+  const cacheKey = new Request(`https://friend-trip.internal/destination-search?q=${encodeURIComponent(q)}`);
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&osm_tag=place`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": "FriendTrip/1.0 (friend-trip planner; contact: n/a)" },
+  });
+  if (!res.ok) return c.json({ results: [] }, 502);
+  const data = (await res.json()) as { features?: PhotonFeature[] };
+  const results = (data.features ?? [])
+    .filter((f) => f.properties.name)
+    .map((f) => ({
+      name: [f.properties.name, f.properties.state, f.properties.country].filter(Boolean).join(", "),
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0],
+    }));
+
+  const response = c.json({ results });
+  const toCache = response.clone();
+  toCache.headers.set("Cache-Control", "public, max-age=86400");
+  c.executionCtx.waitUntil(cache.put(cacheKey, toCache));
+  return response;
+});
+
 export default app;
