@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "friend-trip",
+  "name": "trip-plan",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-07-01",
   "assets": {
