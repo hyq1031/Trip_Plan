@@ -4,7 +4,7 @@
 // (trailing days only) — the Northern Beaches drive that was Day 5 in the
 // reference doc is folded into that free day as "idea"-status suggestions.
 
-const BASE = "http://localhost:8787";
+const BASE = "https://trip-plan.hyq1031.workers.dev";
 const GEOCODE_DELAY_MS = 1100; // Nominatim usage policy: max 1 req/sec
 
 const days = [

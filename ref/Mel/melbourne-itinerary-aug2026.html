@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Melbourne, 4 Days — Aug 12–15, 2026</title>
+<style>
+  :root {
+    --cream: #211c16;
+    --cream-dim: #2a2419;
+    --panel: #2a2419;
+    --ink: #efe8da;
+    --ink-soft: #b7ac98;
+    --rule: #463d2e;
+    --terracotta: #e17f51;
+    --terracotta-soft: #4a3022;
+    --harbour: #7fb3aa;
+    --harbour-soft: #23342e;
+    --free-bg: #2c2820;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --font-body: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-data: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --font-display-zh: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    --font-body-zh: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  }
+  :root[data-theme="dark"] {
+    --cream: #211c16; --cream-dim: #2a2419; --panel: #2a2419; --ink: #efe8da;
+    --ink-soft: #b7ac98; --rule: #463d2e; --terracotta: #e17f51; --terracotta-soft: #4a3022;
+    --harbour: #7fb3aa; --harbour-soft: #23342e; --free-bg: #2c2820;
+  }
+  :root[data-theme="light"] {
+    --cream: #faf6ef; --cream-dim: #f1ead8; --panel: #ffffff; --ink: #2b2620;
+    --ink-soft: #6b6154; --rule: #e1d5be; --terracotta: #c1592f; --terracotta-soft: #e9c9b7;
+    --harbour: #3e6e68; --harbour-soft: #d9e6e1; --free-bg: #f4efe3;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--font-body); line-height: 1.55; }
+  html.lang-zh body { font-family: var(--font-body-zh), var(--font-body); }
+  a { color: var(--terracotta); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 80px; }
+  header.masthead { padding: 40px 20px 28px; border-bottom: 1px solid var(--rule); text-align: left; }
+  .masthead-inner { max-width: 760px; margin: 0 auto; }
+  .masthead-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+  .eyebrow { font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--harbour); }
+  .lang-toggle { display: inline-flex; border: 1px solid var(--rule); border-radius: 100px; padding: 2px; flex-shrink: 0; }
+  .lang-toggle button { border: none; background: transparent; font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.04em; padding: 6px 13px; border-radius: 100px; color: var(--ink-soft); cursor: pointer; }
+  .lang-toggle button.active { background: var(--ink); color: var(--cream); }
+  html.lang-zh .lang-toggle button.active { background: var(--terracotta); color: var(--cream); }
+  h1.title { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.02; margin: 10px 0 14px; text-wrap: balance; letter-spacing: -0.01em; }
+  html.lang-zh h1.title { font-family: var(--font-display-zh); letter-spacing: 0; }
+  .title em { font-style: italic; color: var(--terracotta); }
+  html.lang-zh .title em { font-style: normal; }
+  .dek { color: var(--ink-soft); font-size: 1.02rem; max-width: 54ch; }
+  .stat-row { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 22px; font-family: var(--font-data); }
+  .stat .num { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  html.lang-zh .stat .label { letter-spacing: 0; text-transform: none; }
+  nav.daynav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--cream) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+  nav.daynav .inner { display: flex; gap: 4px; padding: 10px 20px; max-width: 760px; margin: 0 auto; width: max-content; min-width: 100%; }
+  nav.daynav a { flex: 0 0 auto; text-decoration: none; color: var(--ink-soft); font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 7px 11px; border-radius: 100px; border: 1px solid transparent; white-space: nowrap; }
+  html.lang-zh nav.daynav a { letter-spacing: 0; text-transform: none; }
+  nav.daynav a:hover { border-color: var(--rule); color: var(--ink); }
+  nav.daynav a.free { color: var(--harbour); }
+  section { margin-top: 52px; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+  h2.section-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 400; margin: 0; }
+  html.lang-zh h2.section-title { font-family: var(--font-display-zh); }
+  .rule-fill { flex: 1; height: 1px; background: var(--rule); }
+  .region-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .region-card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; }
+  .region-card h3 { font-family: var(--font-display); font-size: 1.02rem; margin: 0 0 4px; font-weight: 400; }
+  html.lang-zh .region-card h3 { font-family: var(--font-display-zh); }
+  .region-card p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+  .region-card .transit { display: inline-block; margin-top: 8px; font-family: var(--font-data); font-size: 0.7rem; color: var(--harbour); }
+  .region-card.skip { opacity: 0.55; }
+  .day { display: grid; grid-template-columns: 64px 1fr; gap: 18px; padding-top: 30px; border-top: 1px solid var(--rule); scroll-margin-top: 60px; }
+  .day:first-of-type { border-top: none; padding-top: 0; }
+  .plate { font-family: var(--font-display); font-size: 2.1rem; color: var(--terracotta-soft); -webkit-text-stroke: 1px var(--terracotta); line-height: 1; padding-top: 4px; }
+  .day.free .plate { -webkit-text-stroke: 1px var(--harbour); color: var(--harbour-soft); }
+  .day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .day-head h3 { font-family: var(--font-display); font-size: 1.4rem; font-weight: 400; margin: 0; }
+  html.lang-zh .day-head h3 { font-family: var(--font-display-zh); }
+  .day-date { font-family: var(--font-data); font-size: 0.75rem; color: var(--ink-soft); }
+  .tag { font-family: var(--font-data); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 100px; background: var(--terracotta-soft); color: var(--terracotta); }
+  html.lang-zh .tag { letter-spacing: 0; text-transform: none; }
+  .tag.harbour { background: var(--harbour-soft); color: var(--harbour); }
+  .day-sub { color: var(--ink-soft); font-size: 0.88rem; margin: 2px 0 16px; }
+  .block { margin-bottom: 14px; }
+  .block .when { font-family: var(--font-data); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--harbour); display: block; margin-bottom: 3px; }
+  html.lang-zh .block .when { letter-spacing: 0; text-transform: none; }
+  .block p { margin: 0; font-size: 0.94rem; }
+  .block p strong { font-weight: 600; }
+  .free-card { background: var(--free-bg); border: 1px dashed var(--harbour); border-radius: 8px; padding: 16px 18px; margin-top: 6px; }
+  .free-card h4 { font-family: var(--font-display); font-weight: 400; margin: 0 0 6px; font-size: 1.05rem; color: var(--harbour); }
+  html.lang-zh .free-card h4 { font-family: var(--font-display-zh); }
+  .free-card p { margin: 0 0 8px; font-size: 0.9rem; }
+  .free-card p:last-child { margin-bottom: 0; }
+  .ref-card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; margin-bottom: 12px; }
+  .ref-card h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.08rem; margin: 0 0 8px; }
+  html.lang-zh .ref-card h3 { font-family: var(--font-display-zh); }
+  .ref-card p, .ref-card li { font-size: 0.9rem; color: var(--ink); }
+  .ref-card ul { margin: 6px 0 0; padding-left: 18px; }
+  .ref-card .warn { color: var(--terracotta); font-weight: 600; }
+  .ref-card .note { font-size: 0.78rem; color: var(--ink-soft); border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 10px; }
+  .stay-block { margin-bottom: 22px; }
+  .stay-block:last-child { margin-bottom: 0; }
+  .stay-block h4 { font-family: var(--font-display); font-weight: 400; font-size: 1rem; margin: 0 0 10px; color: var(--terracotta); }
+  html.lang-zh .stay-block h4 { font-family: var(--font-display-zh); }
+  .stay-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .stay-list li { display: flex; gap: 10px; align-items: baseline; }
+  .stay-list .rank { font-family: var(--font-data); font-size: 0.72rem; color: var(--ink-soft); width: 16px; flex-shrink: 0; padding-top: 2px; }
+  .stay-list .info { font-size: 0.9rem; }
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--rule); font-family: var(--font-data); font-size: 0.72rem; color: var(--ink-soft); }
+  @media (max-width: 480px) { .day { grid-template-columns: 40px 1fr; gap: 12px; } .plate { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="masthead-top">
+      <span class="eyebrow" data-zh='行程手记 — Friend Trip'>Field Plan — Friend Trip</span>
+      <div class="lang-toggle" role="group" aria-label="Language / 语言">
+        <button type="button" data-lang="en" class="active">EN</button>
+        <button type="button" data-lang="zh">中文</button>
+      </div>
+    </div>
+    <h1 class="title" data-zh='墨尔本，<em>四天</em>'>Melbourne, <em>four days</em></h1>
+    <p class="dek" data-zh='根据你保存的墨尔本资料整理，对应到实际出行日期 — 把两天顺序对调了一下，避免市场那天正好碰上每周休市。'>Built from your saved Melbourne research, mapped onto your actual dates — reordered by one day so the market visit doesn't land on its weekly closure.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="num">Aug 12&ndash;15</div><div class="label" data-zh='2026年'>2026</div></div>
+      <div class="stat"><div class="num">4</div><div class="label" data-zh='天数'>Days</div></div>
+      <div class="stat"><div class="num">$0</div><div class="label" data-zh='市区电车免费'>Tram in CBD</div></div>
+      <div class="stat"><div class="num">CBD</div><div class="label" data-zh='落脚点'>Home base</div></div>
+    </div>
+  </div>
+</header>
+
+<nav class="daynav">
+  <div class="inner">
+    <a href="#overview" data-zh='总览'>Overview</a>
+    <a href="#day-1" data-zh='8月12日周三 — 海湾'>Wed 12 — Bayside</a>
+    <a href="#day-2" data-zh='8月13日周四 — 巷弄'>Thu 13 — Laneways</a>
+    <a href="#day-3" data-zh='8月14日周五 — 博物馆'>Fri 14 — Museums</a>
+    <a href="#day-4" data-zh='8月15日周六 — 菲茨罗伊'>Sat 15 — Fitzroy</a>
+    <a href="#transport" data-zh='交通'>Transport</a>
+    <a href="#stay" data-zh='住宿'>Stay</a>
+    <a href="#save" data-zh='省钱'>Save</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section id="overview">
+    <div class="section-head">
+      <h2 class="section-title" data-zh='分区概览'>The regions</h2>
+      <div class="rule-fill"></div>
+    </div>
+    <div class="region-grid">
+      <div class="region-card">
+        <h3 data-zh='市中心与南岸'>CBD &amp; Southbank</h3>
+        <p data-zh='弗林德斯街、巷弄、南岸、雅拉河 — ACMI和移民博物馆所在地。'>Flinders St, the laneways, Southbank, the Yarra River — home to ACMI and the Immigration Museum.</p>
+        <span class="transit" data-zh='免费电车/步行'>Free tram / walk</span>
+      </div>
+      <div class="region-card">
+        <h3 data-zh='艺术区'>Arts Precinct</h3>
+        <p data-zh='雅拉河南岸紧邻市中心 — 国家维多利亚美术馆（NGV国际馆）和墨尔本艺术中心所在地。'>South of the CBD across the Yarra — home to the NGV International and Arts Centre Melbourne.</p>
+        <span class="transit" data-zh='电车 — 正好在免费区边界'>Tram — free zone boundary</span>
+      </div>
+      <div class="region-card">
+        <h3 data-zh='卡尔顿与菲茨罗伊'>Carlton &amp; Fitzroy</h3>
+        <p data-zh='市中心以北 — 历史悠久的墨尔本博物馆、世界遗产皇家展览馆，还有莱贡街。'>Just north of the CBD — the historic Melbourne Museum, the UNESCO Royal Exhibition Building, and Lygon Street.</p>
+        <span class="transit" data-zh='免费电车/步行'>Free tram / walk</span>
+      </div>
+      <div class="region-card">
+        <h3 data-zh='海湾区'>Bayside</h3>
+        <p data-zh='圣基尔达和布莱顿 — 沙滩、历史市场，还有圣基尔达防波堤的企鹅群落。'>St Kilda and Brighton — sandy beaches, a historic market, and the St Kilda penguin breakwater.</p>
+        <span class="transit" data-zh='电车/火车（Myki卡） — 15&ndash;30分钟'>Tram/train (Myki) — 15&ndash;30 min</span>
+      </div>
+      <div class="region-card skip">
+        <h3 data-zh='可选一日游'>Optional day trips</h3>
+        <p data-zh='丹德农山脉（普芬比利蒸汽小火车）和大洋路。两者都不需要自驾 — 已经作为下面第3天和第4天的备选方案，而不是固定行程。'>Dandenong Ranges (Puffing Billy) and the Great Ocean Road. Both are no-driving options — folded in as alternates on Day 3 and Day 4 below instead of fixed stops.</p>
+        <span class="transit" data-zh='火车/跟团大巴'>Train / guided coach</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="itinerary">
+    <div class="section-head">
+      <h2 class="section-title" data-zh='每日行程'>Day by day</h2>
+      <div class="rule-fill"></div>
+    </div>
+
+    <div class="day" id="day-1">
+      <div class="plate">01</div>
+      <div>
+        <div class="day-head">
+          <h3 data-zh='海湾、艺术馆与日落企鹅'>Bayside, Art &amp; Sunset Penguins</h3>
+          <span class="day-date" data-zh='8月12日 周三'>Wed 12 Aug</span>
+          <span class="tag" data-zh='南墨尔本 → 圣基尔达 — 需要Myki卡'>South Melbourne → St Kilda — Myki day</span>
+        </div>
+        <p class="day-sub" data-zh='全程唯一离开免费电车区的一天 — 出门前先给Myki卡充值。'>The one day you leave the Free Tram Zone — load a Myki card before you head out.</p>
+        <div class="block">
+          <span class="when" data-zh='上午'>Morning</span>
+          <p data-zh='坐96路电车到南墨尔本市场 — 周一、周二、周四休市，周三正好开门。在Agathé Pâtisserie吃早餐点心。'>Route 96 tram to <strong>South Melbourne Market</strong> — closed Mondays, Tuesdays and Thursdays, so Wednesday works. Breakfast pastries at Agathé Pâtisserie.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='中午'>Midday</span>
+          <p data-zh='坐电车到圣基尔达路的NGV国际馆 — 从水幕墙入口走进去，彩色玻璃穹顶下是免费的常设展览。'>Tram to the <strong>NGV International</strong> on St Kilda Road — walk under the water wall entrance, the stained-glass ceiling, the permanent collection is free.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='下午'>Afternoon</span>
+          <p data-zh='电车继续南下到圣基尔达 — 棕榈树夹道的海滨大道、Acland街的蛋糕店，在老式Luna Park大门前拍照。'>Tram further south to <strong>St Kilda</strong> — the palm-lined Esplanade, Acland Street cake shops, a photo at the old Luna Park gate.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='日落/晚上'>Sunset / Evening</span>
+          <p data-zh='傍晚到圣基尔达码头防波堤看野生小企鹅群落 — 免费。晚餐在Hotel Esplanade（The Espy）。'>St Kilda Pier Breakwater at dusk for the wild little penguin colony — free. Dinner at Hotel Esplanade (The Espy).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="day" id="day-2">
+      <div class="plate">02</div>
+      <div>
+        <div class="day-head">
+          <h3 data-zh='巷弄、咖啡与墨尔本博物馆'>Laneways, Coffee &amp; Melbourne Museum</h3>
+          <span class="day-date" data-zh='8月13日 周四'>Thu 13 Aug</span>
+          <span class="tag" data-zh='市中心 → 卡尔顿 — 免费电车/步行'>CBD → Carlton — free tram/walk</span>
+        </div>
+        <p class="day-sub" data-zh='回到免费电车区内 — 今天的交通费用几乎为零。'>Back inside the Free Tram Zone — today costs close to nothing to get around.</p>
+        <div class="block">
+          <span class="when" data-zh='上午'>Morning</span>
+          <p data-zh='在Degraves街或Centre Place喝咖啡，然后逛涂鸦巷 — Hosier Lane和AC/DC Lane。去维多利亚州立图书馆看穹顶的La Trobe阅览室。'>Coffee at Degraves Street or Centre Place, then the graffiti lanes — <strong>Hosier Lane</strong> and AC/DC Lane. <strong>State Library Victoria</strong> for the domed La Trobe Reading Room.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='午餐'>Lunch</span>
+          <p data-zh='免费电车向北到卡尔顿的莱贡街 — 在Brunetti Classico吃意大利菜。'>Free tram north to <strong>Lygon Street</strong>, Carlton — Italian at Brunetti Classico.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='下午'>Afternoon</span>
+          <p data-zh='卡尔顿花园里的墨尔本博物馆 — Bunjilaka原住民文化中心、森林展馆，门外就是世界遗产皇家展览馆。'><strong>Melbourne Museum</strong> in Carlton Gardens — the Bunjilaka Aboriginal Cultural Centre, the Forest Gallery, and the UNESCO-listed Royal Exhibition Building right outside.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='晚上'>Evening</span>
+          <p data-zh='免费电车返回市中心。沿雅拉河的南岸步道，然后去墨尔本Skydeck（尤利卡塔）看日落全景。'>Free tram back to the CBD. Southbank Promenade along the Yarra, then <strong>Melbourne Skydeck</strong> (Eureka Tower) for sunset 360° views.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="day" id="day-3">
+      <div class="plate">03</div>
+      <div>
+        <div class="day-head">
+          <h3 data-zh='联邦广场博物馆与老墨尔本'>Museums of Federation Square &amp; Old Melbourne</h3>
+          <span class="day-date" data-zh='8月14日 周五'>Fri 14 Aug</span>
+          <span class="tag" data-zh='市中心 — 免费电车/步行'>CBD — free tram/walk</span>
+        </div>
+        <p class="day-sub" data-zh='三个博物馆，基本都免费，全在电车免费区内。'>Three museums, all free or near enough, all inside the tram zone.</p>
+        <div class="block">
+          <span class="when" data-zh='上午'>Morning</span>
+          <p data-zh='联邦广场的ACMI（澳大利亚动态影像中心） — 互动式电影、电视和电子游戏展览，核心展览免费。'><strong>ACMI</strong> (Australian Centre for the Moving Image) at Federation Square — interactive film, TV and video game galleries, the centrepiece exhibition is free.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='午餐'>Lunch</span>
+          <p data-zh='在联邦广场，或者在Flinders Lane买个三明治。'>Federation Square, or a sandwich on Flinders Lane.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='下午'>Afternoon</span>
+          <p data-zh='弗林德斯街的移民博物馆，然后是拉塞尔街的旧墨尔本监狱 — 关押过传奇悍匪Ned Kelly的牢房。'><strong>Immigration Museum</strong> on Flinders Street, then <strong>Old Melbourne Gaol</strong> on Russell Street — the cell Ned Kelly was held in.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='晚上'>Evening</span>
+          <p data-zh='去Eau De Vie（藏在书架后面的酒吧）喝精酿鸡尾酒，或者去集装箱酒吧Section 8。'>Craft cocktails behind the bookcase at Eau De Vie, or the shipping-container bar Section 8.</p>
+        </div>
+        <div class="free-card">
+          <h4 data-zh='如果想换成这天：大洋路'>If you'd rather trade this day: Great Ocean Road</h4>
+          <p data-zh='从市中心出发的一日跟团大巴会占用一整天，是替换而不是叠加 — 专业司机负责悬崖公路，你只需要欣赏十二使徒岩、Loch Ard峡谷，以及Kennett River的野生考拉。不用自己开车，但是收费项目，全程约12小时。'>A full-day guided coach tour from the CBD replaces this whole day rather than adding to it — a professional driver handles the cliffside roads while you watch the <strong>Twelve Apostles</strong>, Loch Ard Gorge, and wild koalas at Kennett River go by. No driving needed, but it's paid and takes the full 12 hours.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="day" id="day-4">
+      <div class="plate">04</div>
+      <div>
+        <div class="day-head">
+          <h3 data-zh='花园、MCG板球场与菲茨罗伊告别'>Gardens, MCG &amp; Fitzroy Farewell</h3>
+          <span class="day-date" data-zh='8月15日 周六'>Sat 15 Aug</span>
+          <span class="tag" data-zh='市中心东侧 → 菲茨罗伊 — 电车（Myki卡）'>CBD East → Fitzroy — tram (Myki)</span>
+        </div>
+        <p class="day-sub" data-zh='最后一天 — 上午去MCG板球场，晚餐告别收尾。'>Last day — MCG in the morning, a farewell dinner to close it out.</p>
+        <div class="block">
+          <span class="when" data-zh='上午'>Morning</span>
+          <p data-zh='菲茨罗伊花园 — 库克船长小屋和温室。'><strong>Fitzroy Gardens</strong> — Cook's Cottage and the Conservatory.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='中午'>Midday</span>
+          <p data-zh='参观MCG（墨尔本板球场），场内还有澳大利亚体育博物馆。'><strong>MCG</strong> tour, plus the Australian Sports Museum inside the ground.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='下午'>Afternoon</span>
+          <p data-zh='电车到菲茨罗伊的Brunswick街 — 独立书店、复古小店、街头艺术。'>Tram to <strong>Fitzroy</strong>, Brunswick Street — bookshops, vintage stores, street art.</p>
+        </div>
+        <div class="block">
+          <span class="when" data-zh='晚上'>Evening</span>
+          <p data-zh='在Flinders Lane的Chin Chin吃告别晚餐。'>Farewell dinner at Chin Chin, Flinders Lane.</p>
+        </div>
+        <div class="free-card">
+          <h4 data-zh='如果想换成这天：普芬比利蒸汽小火车与袋鼠'>If you'd rather trade this day: Puffing Billy &amp; kangaroos</h4>
+          <p data-zh='从弗林德斯街坐Belgrave线火车到Belgrave（约1小时），然后换乘历史悠久的普芬比利蒸汽小火车穿过高大桉树森林。坐火车返回后换905路公交到Westerfolds公园 — 日落前两小时抵达，可以看到草地上的野生东部灰袋鼠。'>Belgrave Line train from Flinders Street to Belgrave (1hr), then the historic <strong>Puffing Billy</strong> steam train through the mountain-ash forest. Train back, then Bus 905 to <strong>Westerfolds Park</strong> — arrive two hours before sunset for wild Eastern Grey Kangaroos on the open grassland.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="transport">
+    <div class="section-head">
+      <h2 class="section-title" data-zh='市内交通'>Getting around</h2>
+      <div class="rule-fill"></div>
+    </div>
+    <div class="ref-card">
+      <h3 data-zh='市中心免费，其余地方也便宜'>Free in the centre, cheap everywhere else</h3>
+      <p data-zh='市中心网格区和Docklands内的所有电车都是免费的 — 全程不用刷卡，只要行程始终在这个区域内。一旦离开这个范围（圣基尔达、布莱顿、卡尔顿、菲茨罗伊），就需要一张实体Myki卡（6澳元）并充值 — 上电车刷卡，进出火车闸机都要刷卡。'>Every tram inside the CBD grid and Docklands is free — no tap on, no tap off, as long as your whole trip stays inside that zone. Step outside it (St Kilda, Brighton, Carlton, Fitzroy) and you need a physical Myki card ($6 AUD) loaded with Myki Money — tap on boarding trams, tap on and off at train gates.</p>
+      <p class="warn" data-zh='只有第1天需要用到Myki卡。'>Only Day 1 needs the Myki card.</p>
+      <p data-zh='每日车费封顶约10.60澳元 — 当天前两趟之后，剩下的火车、电车、巴士都免费。从机场出发可以直接坐SkyBus到南十字星车站（约20&ndash;30分钟，单程约22澳元） — 图拉马林机场没有本地火车直达。'>Daily fares cap around $10.60 AUD — after your first two trips of the day, everything else (train, tram, bus) is free for the rest of that day. From the airport, the SkyBus runs straight to Southern Cross Station (~20&ndash;30 min, ~$22 AUD one-way) — there's no local train from Tullamarine.</p>
+    </div>
+  </section>
+
+  <section id="stay">
+    <div class="section-head">
+      <h2 class="section-title" data-zh='住宿'>Where to stay</h2>
+      <div class="rule-fill"></div>
+    </div>
+    <div class="ref-card">
+      <h3 data-zh='住在免费电车区内'>Stay inside the Free Tram Zone</h3>
+      <p data-zh='市中心、弗林德斯街沿线或南岸 — 这份行程里的每一站，从这里出发要么走得到，要么一趟免费电车就到，而且这里也是SkyBus的下车点。以下三份清单分别按性价比、舒适度、位置便利度各选五家，全部在这个区域内或紧邻边界。'>CBD, the Flinders Street corridor, or Southbank — everything on this itinerary is walkable or a free tram ride from here, and it's also the SkyBus drop-off point. The three shortlists below are each ranked for value, comfort, and location, all within or right on the edge of that same zone.</p>
+
+      <div class="stay-block">
+        <h4 data-zh='性价比优先 · 前五'>Best value — top 5</h4>
+        <ol class="stay-list">
+          <li><span class="rank">01</span><span class="info" data-zh='<strong><a href="https://www.yha.com.au/hostels/vic/melbourne/melbourne-central/">YHA Melbourne Central</a></strong> — 弗林德斯街，青旅带独立房型，免费电车区内位置无可挑剔。'><strong><a href="https://www.yha.com.au/hostels/vic/melbourne/melbourne-central/">YHA Melbourne Central</a></strong> — Flinders Street, hostel with private rooms as well as dorms, unbeatable Free Tram Zone location.</span></li>
+          <li><span class="rank">02</span><span class="info" data-zh='<strong><a href="https://spacehotel.com.au/">Space Hotel</a></strong> — 卡尔顿花园附近的混合式青旅/酒店，离墨尔本博物馆很近。'><strong><a href="https://spacehotel.com.au/">Space Hotel</a></strong> — hybrid hostel/hotel near Carlton Gardens, close to Melbourne Museum.</span></li>
+          <li><span class="rank">03</span><span class="info" data-zh='<strong>Nomads Melbourne</strong> — Hardware Lane上的青旅，正好在巷弄核心区。'><strong>Nomads Melbourne</strong> — hostel on Hardware Lane, right in the laneway core.</span></li>
+          <li><span class="rank">04</span><span class="info" data-zh='<strong>ibis Styles Melbourne The Victoria Hotel</strong> — Little Collins街的连锁预算酒店，市中心。'><strong>ibis Styles Melbourne The Victoria Hotel</strong> — budget chain on Little Collins Street, CBD.</span></li>
+          <li><span class="rank">05</span><span class="info" data-zh='<strong>Metro Hotel Marlow Melbourne</strong> — 靠近维多利亚女王市场的市中心预算酒店。'><strong>Metro Hotel Marlow Melbourne</strong> — budget CBD hotel near Queen Victoria Market.</span></li>
+        </ol>
+      </div>
+
+      <div class="stay-block">
+        <h4 data-zh='舒适度优先 · 前五'>Most comfortable — top 5</h4>
+        <ol class="stay-list">
+          <li><span class="rank">01</span><span class="info" data-zh='<strong>The Ritz-Carlton Melbourne（墨尔本丽思卡尔顿酒店）</strong> — Flinders Street西端，奢华床品和服务，能看到城市和海湾景观。'><strong>The Ritz-Carlton Melbourne</strong> — Flinders Street west end, luxury bedding and service, city and bay views.</span></li>
+          <li><span class="rank">02</span><span class="info" data-zh='<strong>Grand Hyatt Melbourne（墨尔本君悦酒店）</strong> — Collins街，房间宽敞，全方位服务水准高。'><strong>Grand Hyatt Melbourne</strong> — Collins Street, spacious rooms, full-service comfort.</span></li>
+          <li><span class="rank">03</span><span class="info" data-zh='<strong>Crown Towers Melbourne（墨尔本皇冠大酒店）</strong> — 南岸，高端舒适度，河景房。'><strong>Crown Towers Melbourne</strong> — Southbank, high-end comfort, river views.</span></li>
+          <li><span class="rank">04</span><span class="info" data-zh='<strong>The Langham Melbourne（墨尔本朗廷酒店）</strong> — 南岸，以水疗和宽敞客房著称。'><strong>The Langham Melbourne</strong> — Southbank, renowned for its spa and plush rooms.</span></li>
+          <li><span class="rank">05</span><span class="info" data-zh='<strong>QT Melbourne</strong> — Russell街，精品设计酒店，市中心核心区口碑很好。'><strong>QT Melbourne</strong> — Russell Street, boutique-design hotel, well reviewed comfort in the CBD core.</span></li>
+        </ol>
+      </div>
+
+      <div class="stay-block">
+        <h4 data-zh='位置便利优先 · 前五'>Most convenient location — top 5</h4>
+        <ol class="stay-list">
+          <li><span class="rank">01</span><span class="info" data-zh='<strong><a href="https://quincymelbourne.com/">The Quincy Hotel</a></strong> — Flinders Lane，正处市中心核心位置，就在免费电车区内。'><strong><a href="https://quincymelbourne.com/">The Quincy Hotel</a></strong> — Flinders Lane, dead-center CBD, inside the Free Tram Zone.</span></li>
+          <li><span class="rank">02</span><span class="info" data-zh='<strong><a href="https://www.ovolohotels.com/ovolo/laneways/">Ovolo Laneways</a></strong> — Little Bourke街，正好在巷弄文化核心地带。'><strong><a href="https://www.ovolohotels.com/ovolo/laneways/">Ovolo Laneways</a></strong> — Little Bourke Street, in the heart of the laneways.</span></li>
+          <li><span class="rank">03</span><span class="info" data-zh='<strong>Grand Hyatt Melbourne（墨尔本君悦酒店）</strong> — Collins街，位于免费电车区内，离弗林德斯街车站很近。'><strong>Grand Hyatt Melbourne</strong> — Collins Street, inside the Free Tram Zone, close to Flinders Street Station.</span></li>
+          <li><span class="rank">04</span><span class="info" data-zh='<strong>Crowne Plaza Melbourne</strong> — 靠近弗林德斯街车站和南岸，电车和火车都方便。'><strong>Crowne Plaza Melbourne</strong> — near Flinders Street Station and Southbank, both tram and train access.</span></li>
+          <li><span class="rank">05</span><span class="info" data-zh='<strong>Holiday Inn Melbourne on Flinders</strong> — 就在弗林德斯街上，紧邻车站和免费电车区边界。'><strong>Holiday Inn Melbourne on Flinders</strong> — right on Flinders Street, next to the station and the Free Tram Zone boundary.</span></li>
+        </ol>
+      </div>
+
+      <p class="note" data-zh='这些是按口碑和地段整理的候选名单，不是实时房价 — 我没有核实当下的具体价格，预订前请在Booking.com或Google Hotels上确认实际房价和空房情况。'>These are shortlisted by reputation and location, not live pricing — I haven't verified current rates. Confirm actual prices and availability on Booking.com or Google Hotels before booking.</p>
+    </div>
+  </section>
+
+  <section id="save">
+    <div class="section-head">
+      <h2 class="section-title" data-zh='钱到底花在哪'>Where the money actually goes</h2>
+      <div class="rule-fill"></div>
+    </div>
+    <div class="ref-card">
+      <ul>
+        <li data-zh='<strong>免费博物馆</strong> — NGV国际馆常设展、州立图书馆、ACMI主展览均可免费参观。'><strong>Free museums</strong> — NGV International's permanent galleries, the State Library, and ACMI's main exhibitions all have free general admission.</li>
+        <li data-zh='<strong>跳过菲利普岛</strong> — 圣基尔达码头的野生小企鹅群落免费，坐电车就能到，不用花150多澳元去菲利普岛跟团看企鹅。'><strong>Skip Phillip Island</strong> — the wild little penguin colony at St Kilda Pier is free and a local tram ride away, instead of $150+ AUD tours to Phillip Island.</li>
+        <li data-zh='<strong>用好每日封顶</strong> — 离开免费电车区后，当天头两趟车之后，剩下的电车、火车、巴士都免费。'><strong>Ride the transit cap</strong> — after two trips outside the Free Tram Zone, the rest of that day's trams, trains and buses are free.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer data-zh='根据你保存的墨尔本资料（melbourne_trip_plan_strategy.md、melbourne_destinations_summary.md）整理，对应到2026年8月12&ndash;15日 — 调整了两天的顺序，避免南墨尔本市场那天正好碰上每周休市。第3天和第4天都保留了原始资料里的备选方案，而不是两个都排进去。'>Built from your saved Melbourne research (melbourne_trip_plan_strategy.md, melbourne_destinations_summary.md), mapped onto Aug 12&ndash;15 2026 — days reordered so the South Melbourne Market stop doesn't land on its weekly closure. Day 3 and Day 4 each keep a swap-in alternative from the source material instead of committing to both.</footer>
+
+</div>
+
+<script>
+  (function () {
+    var buttons = document.querySelectorAll('.lang-toggle button');
+    function setLang(lang) {
+      document.querySelectorAll('[data-zh]').forEach(function (el) {
+        if (el.dataset.enCache === undefined) el.dataset.enCache = el.innerHTML;
+        el.innerHTML = lang === 'zh' ? el.dataset.zh : el.dataset.enCache;
+      });
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.documentElement.classList.toggle('lang-zh', lang === 'zh');
+      buttons.forEach(function (b) { b.classList.toggle('active', b.dataset.lang === lang); });
+      try { localStorage.setItem('friendtrip-melbourne-lang', lang); } catch (e) {}
+    }
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.dataset.lang); });
+    });
+    var saved;
+    try { saved = localStorage.getItem('friendtrip-melbourne-lang'); } catch (e) {}
+    if (saved === 'zh') setLang('zh');
+  })();
+</script>
+
+</body>
+</html>
