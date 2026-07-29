@@ -27,6 +27,7 @@ export async function createTrip(input: {
   endDate: string;
   tripType?: TripType;
   freeDays?: number;
+  password: string;
 }): Promise<{ tripId: string; token: string }> {
   const res = await fetch("/api/trips", {
     method: "POST",

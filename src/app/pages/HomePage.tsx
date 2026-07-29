@@ -16,6 +16,7 @@ export default function HomePage() {
   const [endDate, setEndDate] = useState("");
   const [tripType, setTripType] = useState<TripType>("friends");
   const [freeDays, setFreeDays] = useState(0);
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"idle" | "creating" | "generating">("idle");
 
@@ -38,6 +39,7 @@ export default function HomePage() {
         endDate,
         tripType,
         freeDays: clampedFreeDays,
+        password,
       });
       setPhase("generating");
       // Best-effort: a missing/misbehaving OPENROUTER_API_KEY shouldn't block
@@ -135,6 +137,17 @@ export default function HomePage() {
                 {t("home.freeDaysHint", { n: clampedFreeDays, total: totalDays })}
               </span>
             )}
+          </label>
+          <label className="block text-sm text-ink-soft">
+            {t("home.password")}
+            <input
+              type="password"
+              className="mt-1 w-full rounded border border-rule bg-cream px-3 py-2 text-ink outline-none focus:border-terracotta"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t("home.passwordPlaceholder")}
+              required
+            />
           </label>
           {error && <p className="text-sm text-red-700">{error}</p>}
           <button

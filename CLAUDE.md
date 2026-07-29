@@ -15,6 +15,7 @@ Real-time collaborative trip planner. Cloudflare Workers + Durable Objects (SQLi
 Production Worker (`trip-plan`) is connected to GitHub (`hyq1031/Trip_Plan`, branch `master`) via Cloudflare's Workers Builds Git integration — **pushing to `master` auto-deploys to production**, no manual `wrangler deploy` or GitHub Actions step needed. There's no CI config in this repo (`.github/` doesn't exist) — the build is entirely dashboard-managed on Cloudflare's side.
 
 - `OPENROUTER_API_KEY` is a Worker secret (set in the Cloudflare dashboard), not in the repo. Local dev reads it from `.dev.vars` (gitignored; `.dev.vars.example` has the placeholder).
+- `TRIP_CREATE_PASSWORD` is a Worker secret gating `POST /api/trips` (see `src/worker/index.ts`) so randoms can't spin up trips on the public Worker. Same pattern as `OPENROUTER_API_KEY` — set via `wrangler secret put TRIP_CREATE_PASSWORD` in prod, `.dev.vars` locally. This only guards trip *creation*; existing trips are still reached via the per-trip `?k=` token in the URL, unchanged.
 - Enabling the public URL for a Git-connected Worker is a separate manual step in the dashboard (Domains tab) — it isn't automatic on first deploy.
 
 ## Gotchas
@@ -27,4 +28,4 @@ Production Worker (`trip-plan`) is connected to GitHub (`hyq1031/Trip_Plan`, bra
 
 ## Seed scripts
 
-`scripts/seed-*.mjs` replay a hand-curated itinerary against a running instance via the public REST API (create trip → geocode each place with a 1100ms delay per Nominatim's usage policy → insert with day/order/status). Edit the `BASE` constant at the top to point at `http://localhost:8787` or the deployed Worker URL before running. Reusable pattern for any destination — copy one and edit the `days` array.
+`scripts/seed-*.mjs` replay a hand-curated itinerary against a running instance via the public REST API (create trip → geocode each place with a 1100ms delay per Nominatim's usage policy → insert with day/order/status). Edit the `BASE` constant at the top to point at `http://localhost:8787` or the deployed Worker URL before running. Reusable pattern for any destination — copy one and edit the `days` array. They send `TRIP_CREATE_PASSWORD` (env var, falls back to `123456`) to satisfy the create-trip password gate — set it in your shell if the target's secret isn't the default.

@@ -29,7 +29,11 @@ app.post("/api/trips", async (c) => {
     endDate: string;
     tripType?: TripType;
     freeDays?: number;
+    password?: string;
   }>();
+  if (body.password !== c.env.TRIP_CREATE_PASSWORD) {
+    return c.json({ error: "incorrect password" }, 403);
+  }
   if (!body.title || !body.startDate || !body.endDate) {
     return c.json({ error: "title, startDate, endDate are required" }, 400);
   }

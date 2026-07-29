@@ -11,6 +11,8 @@ export interface Dictionary {
   "home.tripTypeFamily": string;
   "home.freeDays": string;
   "home.freeDaysHint": string; // "{n} of {total} days left free"
+  "home.password": string;
+  "home.passwordPlaceholder": string;
   "home.createButton": string;
   "home.creating": string;
   "home.generating": string;
@@ -100,6 +102,8 @@ export const en: Dictionary = {
   "home.tripTypeFamily": "Family",
   "home.freeDays": "Free days (no plans)",
   "home.freeDaysHint": "{n} of {total} day(s) left free — the rest get AI-recommended places",
+  "home.password": "Password",
+  "home.passwordPlaceholder": "Ask the trip organiser",
   "home.createButton": "Create trip",
   "home.creating": "Creating…",
   "home.generating": "Finding great spots for your trip… (~45-75s)",
@@ -189,6 +193,8 @@ export const zh: Dictionary = {
   "home.tripTypeFamily": "家庭",
   "home.freeDays": "自由活动天数（不安排行程）",
   "home.freeDaysHint": "{total}天中留{n}天自由活动 —— 其余由AI推荐地点",
+  "home.password": "密码",
+  "home.passwordPlaceholder": "向行程组织者询问",
   "home.createButton": "创建行程",
   "home.creating": "创建中…",
   "home.generating": "正在为你寻找推荐地点…（约45-75秒）",

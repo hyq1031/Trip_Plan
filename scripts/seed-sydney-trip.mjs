@@ -86,6 +86,7 @@ async function main() {
       endDate: "2026-08-11",
       tripType: "friends",
       freeDays: 1,
+      password: process.env.TRIP_CREATE_PASSWORD ?? "123456",
     }),
   });
   if (!createRes.ok) throw new Error(`createTrip failed: ${createRes.status} ${await createRes.text()}`);
